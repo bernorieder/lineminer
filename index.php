@@ -12,8 +12,8 @@ ini_set("memory_limit","3048M");
 ini_set("error_reporting",1);
 
 $query = (isset($_GET["query"])) ? $_GET["query"]:"blabla";
-$startdate = (isset($_GET["startdate"])) ? $_GET["startdate"]:"2011-01-01";
-$enddate = (isset($_GET["enddate"])) ? $_GET["enddate"]:"2011-02-25";
+$startdate = (isset($_GET["startdate"])) ? $_GET["startdate"]:"2014-01-01";
+$enddate = (isset($_GET["enddate"])) ? $_GET["enddate"]:"2015-01-01";
 $showfull = (isset($_GET["showfull"]) == "on") ? true:false;
 $getcontext = (isset($_GET["getcontext"]) == "on") ? true:false;
 $getcomments = (isset($_GET["getcomments"]) == "on") ? true:false;
@@ -87,7 +87,7 @@ asort($filenames);
 
 <body>
 
-<form action="newsearch.php" method="get">
+<form action="index.php" method="get">
 	<table class="if">
 		<tr>
 		<td class="if">filename:</td>
@@ -169,14 +169,9 @@ while(($buffer = fgets($fr)) !== false) {
 
 	//print_r($buffer); exit;
 
-	if(preg_match("/full/", $filename)) {
-		$unixdate = strtotime($buffer[3]);			// 4 and 3
-		$content = $buffer[7];						// 5 and 7
-	} else {
-		$unixdate = strtotime($buffer[4]);
-		$content = $buffer[5];
-	}
-	//print_r($buffer);
+	$unixdate = strtotime($buffer[4]);			// 4 and 3
+	$content = $buffer[8];						// 5 and 7
+		//print_r($buffer);
 
 	if($unixdate < strtotime($startdate . " 00:00:00") || $unixdate > strtotime($enddate . " 23:59:59")) {
 		continue;
