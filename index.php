@@ -147,8 +147,6 @@ if(isset($_GET["query"])) {
 	exit;
 }
 
-// مصر,الفتنه
-
 $filename = $dir . "/" . $_GET["file"];
 
 $datebins = array();
