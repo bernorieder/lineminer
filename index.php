@@ -1,17 +1,28 @@
 <?php
 
-include "stopwordsallforms.php";
+// tool description
+// Some stop word lists: http://www.semantikoz.com/blog/free-stop-word-lists-in-23-languages/
+// and/or
+// tab outputs
+// different file models
 
-$dir = "./data";
 
-$windowsize = 3;
+
 
 ignore_user_abort(false);
 set_time_limit(3600*1);
 ini_set("memory_limit","3048M");
 ini_set("error_reporting",1);
 
-$query = (isset($_GET["query"])) ? $_GET["query"]:"blabla";
+
+// ----- link external files -----
+include "functions.php";
+include "config.php";
+
+
+// ----- get URL parameters -----
+$query = (isset($_GET["query"])) ? $_GET["query"]:"barcelona";
+$language = (isset($_GET["language"])) ? $_GET["language"]:"english";
 $startdate = (isset($_GET["startdate"])) ? $_GET["startdate"]:"2014-01-01";
 $enddate = (isset($_GET["enddate"])) ? $_GET["enddate"]:"2015-01-01";
 $showfull = (isset($_GET["showfull"]) == "on") ? true:false;
@@ -28,7 +39,9 @@ if($_GET["timescale"] == "day") {
 	$seconds = 604800;
 }
 
-if ($dh = opendir($dir)) {
+// check for and load list of data files
+$filenames = array();
+if ($dh = opendir($datadir)) {
 	while (($file = readdir($dh)) !== false) {
 		if(preg_match("/\.tab/", $file)) {
 			$filenames[] = $file;
@@ -36,10 +49,24 @@ if ($dh = opendir($dir)) {
 	}
 	closedir($dh);
 } else {
-	echo "error";
+	echo "Error: could not open files in data directory: " . $datadir;
 }
 
-asort($filenames);
+
+// check for and load list of stopword files
+$stopfiles = array();
+if ($dh = opendir($stopwordsdir)) {
+	while (($file = readdir($dh)) !== false) {
+		if(preg_match("/\.txt/", $file)) {
+			preg_match("/_(.*?)\./",$file, $matches);
+			$stopfiles[$matches[1]] = $file;
+		}
+	}
+	closedir($dh);
+} else {
+	echo "Error: could not open files in stopword directory: " . $stopwordsdir;
+}
+
 
 ?>
 
@@ -49,105 +76,170 @@ asort($filenames);
 
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
+	<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-
+    
     <script type="text/javascript">
 
         google.load("visualization", "1", {packages:["corechart"]});
 
+		function loadFile(_file) {
+			$.getJSON( "examinefile.php", { file:_file }, function(_reply) {
+				
+				if(_reply.type == "facebook") {
+					$("#if_parameters").show();
+					$("#if_parameters_facebook").show();
+					$("#if_filedetected").html("Netvizz file detected");
+				}
+				
+				if(_reply.type == "youtube") {
+					$("#if_parameters").show();
+					$("#if_parameters_facebook").hide();
+					$("#if_filedetected").html("YouTube Data Tools file detected");
+				}
+			});
+		}
+		
+		function clearForm() {
+			$("[name='file']").prop('selectedIndex',0);
+		}
+
     </script>
 
-	<style type="text/css">
-
-		body {
-			font-family: Arial, Helvetica, sans-serif;
-			font-size: 11px;
-		}
-
-		table,tr,td {
-			font-family: Arial, Helvetica, sans-serif;
-			font-size: 9px;
-			border-collapse:collapse;
-			border: 1px solid black;
-		}
-
-		table.if,tr.if,td.if {
-			font-family: Arial, Helvetica, sans-serif;
-			font-size: 11px;
-			border-collapse:collapse;
-			border: 3px solid white;
-		}
-
-		td {
-			padding:2px;
-		}
-
-	</style>
+	<link rel="stylesheet" type="text/css" href="main.css">
 </head>
 
-<body>
+<body onload="clearForm();">
 
-<form action="index.php" method="get">
-	<table class="if">
-		<tr>
-		<td class="if">filename:</td>
-		<td class="if">
-			<select name="file">
-			<?php
-			foreach($filenames as $filename) {
-				$selectmarker = ($filename == $_GET["file"]) ? "selected":"";
-				echo '<option value="'.$filename.'" '.$selectmarker.'>'.$filename.'</option>';
-			}
-			?>
+<h1>lineminer</h1>
+
+<p>BlaBla, explanation, FAQ, links, credits. Source code <a href="https://github.com/bernorieder/lineminer" target="_blank">available on github.</a></p>
+
+<div id="if_file">
+	
+	<form action="index.php" method="get">
+	
+	<div class="rowTab">
+		<div class="leftTab">Choose a file:</div>
+		
+		<div class="rightTab">
+			<select name="file" onchange="loadFile(this.value)">
+				<option value="none">select</option>
+				<?php
+				foreach($filenames as $filename) {
+					$selectmarker = ($filename == $_GET["file"]) ? "selected":"";
+					echo '<option value="'.$filename.'" '.$selectmarker.'>'.$filename.'</option>';
+				}
+				?>
 			</select>
-		</td>
-		</tr>
-		<tr>
-			<td class="if">query:</td>
-			<td class="if"><input type="text" name="query" value="<?php echo $query; ?>" /> (separate multiple keywords with comma, use a pipe for OR)</td>
-		</tr>
-		<tr>
-			<td class="if">startdate:</td>
-			<td class="if"><input type="text" name="startdate" value="<?php echo $startdate; ?>" /> (YYYY-MM-DD)</td>
-		</tr>
-		<tr>
-			<td class="if">enddate:</td>
-			<td class="if"><input type="text" name="enddate" value="<?php echo $enddate; ?>" /> (YYYY-MM-DD)</td>
-		</tr>
-		<tr>
-			<td class="if">plot per:</td>
-			<td class="if"><input type="radio" name="timescale" value="day" <?php if($_GET["timescale"] == "day") { echo 'checked="checked"'; } ?> /> day or
-			<input type="radio" name="timescale" value="week" <?php if($_GET["timescale"] == "week") { echo 'checked="checked"'; } ?> /> week</td>
-		</tr>
-		<tr>
-			<td class="if"></td>
-			<td class="if"><input type="checkbox" name="showfull" <?php if($showfull != false) {  echo 'checked="checked"'; } ?> /> show full comment line</td>
-		</tr>
-		<tr>
-			<td class="if"></td>
-			<td class="if"><input type="checkbox" name="getcomments" <?php if($getcomments != false) {  echo 'checked="checked"'; } ?> /> show comments (with at least <input type="text" name="minlikes" style="width:25px;" value="<?php echo $minlikes; ?>" /> likes)</td>
-		</tr>
-		<tr>
-			<td class="if"></td>
-			<td class="if"><input type="checkbox" name="getcontext" <?php if($getcontext != false) {  echo 'checked="checked"'; } ?> /> show word context</td>
-		</tr>
-		<tr>
-			<td class="if"></td>
-			<td class="if"><input type="submit" /></td>
-		</tr>
-	</table>
-</form>
+		</div>
+	</div>
+</div>
+
+<div class="clear"></div>
+
+<div id="if_filedetected"></div>
+
+<div id="if_parameters">
+	
+	<div id="if_parameters_common">
+		<div class="rowTab">
+			<div class="headTab">Common parameters</div>
+		</div>
+	
+		<div class="rowTab">
+			<div class="leftTab">Search query:</div>
+			
+			<div class="rightTab">
+				<input type="text" name="query" value="<?php echo $query; ?>" /> (separate multiple keywords with comma, use a pipe for OR)
+			</div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="leftTab">File language:</div>
+			
+			<div class="rightTab">
+				<select name="language">
+					<?php
+					foreach($stopfiles as $lang => $file) {
+						if($lang == $language) {
+							echo '<option value="'.$lang.'" selected>'.$lang.'</option>';
+						} else {
+							echo '<option value="'.$lang.'">'.$lang.'</option>';
+						}
+					}
+					?>
+				</select>
+			</div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="leftTab">Startdate:</div>
+			
+			<div class="rightTab">
+				<input type="text" name="startdate" value="<?php echo $startdate; ?>" /> (YYYY-MM-DD)
+			</div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="leftTab">Enddate:</div>
+			
+			<div class="rightTab">
+				<input type="text" name="enddate" value="<?php echo $enddate; ?>" /> (YYYY-MM-DD)
+			</div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="leftTab">Time interval:</div>
+			
+			<div class="rightTab">
+				<input type="radio" name="timescale" value="day" <?php if($_GET["timescale"] == "day") { echo 'checked="checked"'; } ?> /> day or
+				<input type="radio" name="timescale" value="week" <?php if($_GET["timescale"] != "day") { echo 'checked="checked"'; } ?> /> week
+			</div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="fullTab"><input type="checkbox" name="showfull" <?php if($showfull != false) {  echo 'checked="checked"'; } ?> /> show full comment line</div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="fullTab"><input type="checkbox" name="getcontext" <?php if($getcontext != false) {  echo 'checked="checked"'; } ?> /> show word context</div>
+		</div>
+	</div>
+	
+	<div id="if_parameters_facebook">
+		<div class="rowTab">
+			<div class="headTab">Facebook parameters</div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="fullTab">
+				<input type="checkbox" name="getcomments" <?php if($getcomments != false) {  echo 'checked="checked"'; } ?> /> show comments (with at least
+				<input type="text" name="minlikes" style="width:25px;" value="<?php echo $minlikes; ?>" /> likes)
+			</div>
+		</div>
+	</div>
+	
+	<div id="if_parameters_submit">
+		<input type="submit" />
+	</div>
+		
+	</form>
+</div>
 
 <?php
 
+// check query
 if(isset($_GET["query"])) {
 	$queries = explode(",",$_GET["query"]);
 } else {
-	echo "no query.";
 	exit;
 }
 
-$filename = $dir . "/" . $_GET["file"];
+// get stopword list
+$stopwords = getstopwords($language);
+
+$filename = $datadir . "/" . $_GET["file"];
 
 $datebins = array();
 $datebins_full = array();
@@ -176,15 +268,25 @@ while(($buffer = fgets($fr)) !== false) {
 	if($unixdate < strtotime($startdate . " 00:00:00") || $unixdate > strtotime($enddate . " 23:59:59")) {
 		continue;
 	}
+	
+	// get out significant objects
+	preg_match("/http(.*?) /",$content, $matches);
+	//print_r($matches[0]);
+	
+	//echo "<br />";
+	
+	preg_match("/ #(.*?) /",$content, $matches);
+	//	print_r($matches[0]);
+	
 
 	// clean up content a little
 	if($getcontext) {
-		//$content = preg_replace("/[^\w\s]/","",$content);			// arabic is filtered out!
+		$content = preg_replace("/[\.\"\'\!\?\(\);,¿:]/", " ", $content); // currently also filters out URLs 
 		$content = preg_replace("/[\n\r]/", " ", $content);
 		$content = preg_replace("/\s+/", " ", $content);
 		$content = strtolower($content);
 	}
-	//echo $content; exit;
+	//echo $content;
 
 	$date = date($dateformat,$unixdate);
 	if(!isset($datebins_full[$date])) {
@@ -427,24 +529,33 @@ if($getcomments) {
 if($getcontext) {
 
 	echo '<hr />';
-
+	
 	foreach($wordlists as $query => $wordlist) {
-
-		echo "<br /><br /><strong>" . $query . "</strong><br />";
 
 		ksort($wordlist);
 
+		echo "<br /><br /><strong>" . $query . "</strong><br />";
+
+		echo '<table class="wordlist"><tr class="wordlist">';
+
+		foreach($wordlist as $date => $list) {
+			
+			echo '<th class="wordlist">'.$date.'</th>';
+		}
+
+		echo '</tr><tr class="wordlist">';
+		
 		foreach($wordlist as $date => $list) {
 
 			arsort($list);
 
-			echo $date . ":<br />frequency: ";
+			echo '<td class="wordlist">frequency:<br />';
 			$speclist = array();
 
 			$counter = 0;
 			foreach($list as $word => $freq) {
 				if($counter <= 10) {
-					echo $word . " (" . $freq . "/" . round($freq / $wordlist_full[$word],3) . "), ";
+					echo $word . " (" . $freq . "/" . round($freq / $wordlist_full[$word],3) . ")<br />";
 					//echo $word . " (".$freq . ") ";
 				}
 				$counter++;
@@ -453,18 +564,26 @@ if($getcontext) {
 				}
 			}
 
+			echo '</td>';
+
+		}
+		
+		echo '</tr><tr class="wordlist">';
+		
+		foreach($wordlist as $date => $list) {
+			
 			arsort($speclist);
 
 			//$tmplist = array_slice($tmplist,0,20);
-			echo "<br />specificity: ";
+			echo '<td class="wordlist">specificity:<br />';
 			$counter = 0;
 			foreach($speclist as $word => $freq) {
 				if($counter == 10) {break;}
 				$counter++;
-				echo $word . " (" . $list[$word] . "/" . round($freq,3) . "), ";
+				echo $word . " (" . $list[$word] . "/" . round($freq,3) . ")<br />";
 			}
 
-			echo "<br /><br />";
+			echo "</td>";
 
 			/*
 			foreach($phrases[$query][$date] as $phrase) {
@@ -476,9 +595,12 @@ if($getcontext) {
 			 */
 		}
 
+		echo '</tr></table>';
+
 		echo "<br /><br />";
 	}
 
+	
 }
 
 
