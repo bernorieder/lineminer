@@ -1,0 +1,47 @@
+body {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+}
+
+table {
+	background-color: #fff;
+}
+
+table,tr,td,th {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 9px;
+	border-collapse:collapse;
+}
+
+td {
+	padding:3px;
+}
+
+table.if,tr.if,td.if {
+	font-size: 11px;
+}
+
+table.wordlist,tr.wordlist,td.wordlist,th.wordlist {
+	font-size: 11px;
+	vertical-align:top;
+	border:1px solid black;
+}
+
+#if_parameters { display:none; }
+#if_parameters_facebook { display:none; }
+#if_parameters_youtube { display:none; }
+#if_parameters_twitter { display:none; }
+
+
+#context {
+	width:100%;
+	height:1000px;
+	overflow: scroll;
+}
+
+.rowTab { display:table; }
+.leftTab {  display: table-cell; vertical-align: middle; padding:3px; width:120px; }
+.rightTab { display: table-cell; vertical-align: middle; padding:3px; }
+.fullTab { display: table-cell; vertical-align: middle; padding:3px; }
+.headTab { display: table-cell; vertical-align: middle; padding:10px 0px 5px 3px; font-size:14px; font-weight:bold; }
+.clear { width:100%; height:1px; margin:0 0 -1px; clear:both;}
