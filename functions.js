@@ -15,6 +15,11 @@ function onloadTodo() {
 	if(_getcontext == "on") {
 		$("#if_panel_context").show();
 	}
+	
+	_dooutput = getURLParameter("dooutput");
+	if(_dooutput == "on") {
+		$("#if_panel_downloads").show();
+	}
 }
 
 

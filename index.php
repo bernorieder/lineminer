@@ -17,6 +17,7 @@ $query = (isset($_GET["query"])) ? $_GET["query"]:"barcelona";
 $language = (isset($_GET["language"])) ? $_GET["language"]:"english";
 $showfull = (isset($_GET["showfull"]) == "on") ? true:false;
 $getcontext = (isset($_GET["getcontext"]) == "on") ? true:false;
+$dooutput = (isset($_GET["dooutput"]) == "on") ? true:false;
 $minfblikes = (isset($_GET["minfblikes"])) ? $_GET["minfblikes"]:0;
 $minytlikes = (isset($_GET["minytlikes"])) ? $_GET["minytlikes"]:0;
 $minretweets = (isset($_GET["minretweets"])) ? $_GET["minretweets"]:0;
@@ -229,6 +230,10 @@ if ($dh = opendir($stopwordsdir)) {
 		<div class="rowTab">
 			<div class="fullTab"><input type="checkbox" name="getcontext" <?php if($getcontext != false) {  echo 'checked="checked"'; } ?> /> show word context</div>
 		</div>
+		
+		<div class="rowTab">
+			<div class="fullTab"><input type="checkbox" name="dooutput" <?php if($dooutput != false) {  echo 'checked="checked"'; } ?> /> write filtered lines to new file (use wisely)</div>
+		</div>
 	</div>
 	
 	<div id="if_parameters_facebook" class="if_structure">
@@ -293,6 +298,7 @@ if(isset($_GET["query"])) {
 $stopwords = getstopwords($language);
 
 $filename = $datadir . "/" . $_GET["fileselect"];
+$filename_out = $outdir . "/filtered_" . $query . "_" . $_GET["fileselect"];
 $filetype = $_GET["filetype"];
 $separator = (preg_match("/\.tab/",$_GET["fileselect"])) ? "\t":",";
 
@@ -302,18 +308,21 @@ $wordlists = array();
 $wordlist_full = array();
 $phrases = array();
 
+
 $fr = fopen($filename,'r');
+if($dooutput) { $fw = fopen($filename_out,'w'); }
 $counter = 0;
 
 // ----- main file loop -----
-while(($buffer = fgets($fr)) !== false) {
+while(($rawbuffer = fgets($fr)) !== false) {
 
 	if($counter == 0) {			// jump first line
+		if($dooutput) { fwrite($fw, $rawbuffer); }
 		$counter++;
 		continue;
 	}
 
-	$buffer = str_getcsv($buffer,$separator,'"');
+	$buffer = str_getcsv($rawbuffer,$separator,'"');
 
 	// select appropriate colums
 	if($filetype == "facebook") {
@@ -339,7 +348,7 @@ while(($buffer = fgets($fr)) !== false) {
 		if($buffer[10] < $minretweets || $buffer[11] < $minfavs) { continue; }
 	}
 	
-	
+	if($dooutput) { fwrite($fw, $rawbuffer); }
 	
 	// get out significant objects
 	//preg_match("/http(.*?) /",$content, $matches);
@@ -418,6 +427,7 @@ while(($buffer = fgets($fr)) !== false) {
 	}
 }
 
+fclose($fw);
 fclose($fr);
 
 // fill empty dates and create date list
@@ -448,6 +458,27 @@ foreach($queries as $query) {
 ?>
 
 <div id="if_panel" class="if_structure">
+	
+	<div id="if_panel_downloads" class="if_structure">
+		<div class="rowTab">
+			<div class="headTab">
+				Files written to disk:
+			</div>
+		</div>
+				
+		<div class="rowTab">
+			<div id="if_panel_downloads_data" class="fullTab">
+				<?php
+				
+				if($dooutput) {
+					
+					echo 'Filtered file: <a href="'.$filename_out.'" download>'.$filename_out.'</a>'; 
+				}
+					
+				?>
+			</div>
+		</div>
+	</div>
 	
 	<div class="rowTab">
 		<div class="headTab">

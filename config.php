@@ -2,6 +2,7 @@
 
 // ----- configuration variables -----
 $datadir = "./data";
+$outdir = "./output";
 $stopwordsdir = "./stopwords/";
 $windowsize = 3;
 $httproot = "https://tools.digitalmethods.net/netvizz/facebook/research/lineminer/";
