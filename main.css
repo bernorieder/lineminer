@@ -24,7 +24,7 @@ table.wordlist,tr.wordlist,td.wordlist,th.wordlist { font-size: 11px; vertical-a
 #if_panel_context { display:none; width:1200px; }
 #if_panel_context_data { overflow:scroll; }
 
-if_panel_downloads { display:none; }
+#if_panel_downloads { display:none; }
 
 .if_structure { margin:0px; }
 
