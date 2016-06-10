@@ -313,8 +313,6 @@ $fr = fopen($filename,'r');
 if($dooutput) { $fw = fopen($filename_out,'w'); }
 $counter = 0;
 
-print_r($stopwords);
-
 // ----- main file loop -----
 while(($rawbuffer = fgets($fr)) !== false) {
 
@@ -554,13 +552,13 @@ if($getcontext) {
 			
 			arsort($list);
 
-			echo '<td class="wordlist">frequency:<br />';
+			echo '<td class="wordlist"><em>frequency:</em><br />';
 			$speclist = array();
 
 			$counter = 0;
 			foreach($list as $word => $freq) {
-				if($counter <= 10) {
-					echo $word . " (" . $freq . "/" . $wordlist_full[$word] . ")<br />";	
+				if($counter <= 15) {
+					echo $word . "&nbsp;(" . $freq . "/" . $wordlist_full[$word] . ")<br />";	
 				}
 				$counter++;
 				if($wordlist_full[$word] > 2) {
@@ -589,12 +587,12 @@ if($getcontext) {
 
 			arsort($speclist);
 
-			echo '<td class="wordlist">tf*idf:<br />';
+			echo '<td class="wordlist"><em>tf-idf:</em><br />';
 			$counter = 0;
 			foreach($speclist as $word => $freq) {
-				if($counter == 10) {break;}
+				if($counter == 15) {break;}
 				$counter++;
-				echo $word . " (" . $speclist[$word] . "," . $wordlist[$date][$word] . "," . $wordlist_full[$word] . ")<br />";
+				echo $word . "&nbsp;(" . $speclist[$word] . "," . $wordlist[$date][$word] . "," . $wordlist_full[$word] . ")<br />";
 			}
 
 			echo "</td>";
