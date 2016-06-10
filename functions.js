@@ -2,7 +2,7 @@ function onloadTodo() {
 	
 	// clear the browsers selection memory
 	
-	_fileselect = getURLParameter("fileselect");
+	var _fileselect = getURLParameter("fileselect");
 	if(typeof(_fileselect) != "undefined") {
 		$("select option[value='" + _fileselect + "']").prop("selected",true);
 		loadFile(_fileselect);
@@ -10,13 +10,12 @@ function onloadTodo() {
 		$("[name='fileselect']").prop('selectedIndex',0);
 	}
 	
-	
-	_getcontext = getURLParameter("getcontext");
+	var _getcontext = getURLParameter("getcontext");
 	if(_getcontext == "on") {
 		$("#if_panel_context").show();
 	}
 	
-	_dooutput = getURLParameter("dooutput");
+	var _dooutput = getURLParameter("dooutput");
 	if(_dooutput == "on") {
 		$("#if_panel_downloads").show();
 	}
