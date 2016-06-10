@@ -18,11 +18,14 @@ $language = (isset($_GET["language"])) ? $_GET["language"]:"english";
 $showfull = (isset($_GET["showfull"]) == "on") ? true:false;
 $getcontext = (isset($_GET["getcontext"]) == "on") ? true:false;
 $dooutput = (isset($_GET["dooutput"]) == "on") ? true:false;
+$incfbpost = (isset($_GET["incfbpost"]) == "on") ? true:false;
 $minfblikes = (isset($_GET["minfblikes"])) ? $_GET["minfblikes"]:0;
 $minytlikes = (isset($_GET["minytlikes"])) ? $_GET["minytlikes"]:0;
 $minretweets = (isset($_GET["minretweets"])) ? $_GET["minretweets"]:0;
 $minfavs = (isset($_GET["minfavs"])) ? $_GET["minfavs"]:0;
 $timescale = (isset($_GET["timescale"])) ? $_GET["timescale"]:"week";
+
+
 
 $_GET["startdate"] = (isset($_GET["startdate"])) ? $_GET["startdate"]:"2014-01-01";
 if(preg_match("/ [0-9]{2}:[0-9]{2}:[0-9]{2}$/", $_GET["startdate"])) {
@@ -243,6 +246,12 @@ if ($dh = opendir($stopwordsdir)) {
 		
 		<div class="rowTab">
 			<div class="fullTab">
+				<input type="checkbox" name="incfbpost" <?php if($incfbpost != false) {  echo 'checked="checked"'; } ?> /> include lines where post text matches query</div>
+			</div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="fullTab">
 				filter comments below <input type="text" name="minfblikes" style="width:20px;" value="<?php echo $minfblikes; ?>" /> comment likes
 			</div>
 		</div>
@@ -328,6 +337,7 @@ while(($rawbuffer = fgets($fr)) !== false) {
 	if($filetype == "facebook") {
 		$unixdate = strtotime($buffer[4]);
 		$content = $buffer[8];
+		$postcontent = $buffer[3];
 	} else if($filetype == "youtube") {
 		$unixdate = strtotime($buffer[3]);
 		$content = $buffer[5];	
@@ -348,6 +358,7 @@ while(($rawbuffer = fgets($fr)) !== false) {
 		if($buffer[10] < $minretweets || $buffer[11] < $minfavs) { continue; }
 	}
 	
+	// stream filtered lines to file
 	if($dooutput) { fwrite($fw, $rawbuffer); }
 	
 	// get out significant objects
@@ -386,7 +397,9 @@ while(($rawbuffer = fgets($fr)) !== false) {
 		if(!isset($wordlists[$query])) { $wordlists[$query] = array(); }
 		if(!isset($phrases[$query])) { $phrases[$query] = array(); }
 
-		if(preg_match("/".$query."/i",$content) || $query == "all") {
+		$incpost = ($incfbpost == true && preg_match("/".$query."/i",$postcontent)) ? true:false;
+
+		if(preg_match("/".$query."/i",$content) || $query == "all" || $incpost == true) {
 
 			if(!isset($datebins[$query][$date])) { $datebins[$query][$date] = array(); }
 			if(!isset($wordlists[$query][$date])) { $wordlists[$query][$date] = array(); }
