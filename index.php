@@ -313,6 +313,8 @@ $fr = fopen($filename,'r');
 if($dooutput) { $fw = fopen($filename_out,'w'); }
 $counter = 0;
 
+print_r($stopwords);
+
 // ----- main file loop -----
 while(($rawbuffer = fgets($fr)) !== false) {
 
@@ -362,9 +364,13 @@ while(($rawbuffer = fgets($fr)) !== false) {
 
 	// clean up content
 	if($getcontext) {
-		$content = preg_replace("/[\.\"\'\!\?\(\);,¿:]/", " ", $content); // currently also filters out URLs 
-		$content = preg_replace("/[\n\r]/", " ", $content);
-		$content = preg_replace("/\s+/", " ", $content);
+		//$content = preg_replace("/[\.\"\'\!\?\(\);,¿:]/", " ", $content); // currently also filters out URLs 
+		//$content = preg_replace("/[\n\r]/", " ", $content);
+		//$content = preg_replace("/\s+/", " ", $content);
+		//$content = preg_replace("/\W+/", " ", $content);
+		$content = preg_replace("/http.+?( |$)/i","", $content);
+		$content = preg_replace("/[^a-z0-9\p{L}]+/iu"," ", $content);
+		$content = trim($content);
 		$content = strtolower($content);
 	}
 	//echo $content;
@@ -412,8 +418,8 @@ while(($rawbuffer = fgets($fr)) !== false) {
 				*/
 
 				foreach($contextwords as $word) {
-
-					if(isset($stopwords[$word])) { continue; }
+					
+					if(isset($stopwords[$word]) || strlen($word) < 3) { continue; }
 
 					if(!isset($wordlists[$query][$date][$word])) {
 						$wordlists[$query][$date][$word] = 0;
