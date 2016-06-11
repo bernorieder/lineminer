@@ -30,20 +30,22 @@ $timescale = (isset($_GET["timescale"])) ? $_GET["timescale"]:"week";
 $_GET["startdate"] = (isset($_GET["startdate"])) ? $_GET["startdate"]:"2014-01-01";
 if(preg_match("/ [0-9]{2}:[0-9]{2}:[0-9]{2}$/", $_GET["startdate"])) {
 	$startdate = $_GET["startdate"];
-} else if(preg_match("/ [0-9]{2}:[0-9]{2}$/", $startdate)) {
+} else if(preg_match("/ [0-9]{2}:[0-9]{2}$/", $_GET["startdate"])) {
 	$startdate = $_GET["startdate"] . ":00";
 } else {
 	$startdate .= $_GET["startdate"] . " 00:00:00";
 }
 
 $_GET["enddate"] = (isset($_GET["enddate"])) ? $_GET["enddate"]:"2015-01-01";
-if(preg_match("/ [0-9]{2}:[0-9]{2}:[0-9]{2}$/", $enddate)) {
+if(preg_match("/ [0-9]{2}:[0-9]{2}:[0-9]{2}$/", $_GET["enddate"])) {
 	$enddate = $_GET["enddate"];
-} else if(preg_match("/ [0-9]{2}:[0-9]{2}$/", $enddate)) {
+} else if(preg_match("/ [0-9]{2}:[0-9]{2}$/", $_GET["enddate"])) {
 	$enddate .= $_GET["enddate"] . ":59";
 } else {
 	$enddate .= $_GET["enddate"] . " 23:59:59";
 }
+
+//echo $startdate . "|" . $enddate;
 
 
 // ----- make calculations for interval -----
@@ -203,7 +205,7 @@ if ($dh = opendir($stopwordsdir)) {
 			<div class="leftTab">Startdate:</div>
 			
 			<div class="rightTab">
-				<input type="text" name="startdate" value="<?php echo $_GET["startdate"]; ?>" /> YYYY-MM-DD (HH:MM)
+				<input type="text" name="startdate" value="<?php echo $_GET["startdate"]; ?>" /> YYYY-MM-DD or YYYY-MM-DD HH:MM
 			</div>
 		</div>
 		
@@ -211,7 +213,7 @@ if ($dh = opendir($stopwordsdir)) {
 			<div class="leftTab">Enddate:</div>
 			
 			<div class="rightTab">
-				<input type="text" name="enddate" value="<?php echo $_GET["enddate"]; ?>" /> YYYY-MM-DD (HH:MM)
+				<input type="text" name="enddate" value="<?php echo $_GET["enddate"]; ?>" /> YYYY-MM-DD or YYYY-MM-DD HH:MM
 			</div>
 		</div>
 		
@@ -219,7 +221,7 @@ if ($dh = opendir($stopwordsdir)) {
 			<div class="leftTab">Time interval:</div>
 			
 			<div class="rightTab">
-				<input type="radio" name="timescale" value="hour" <?php if($_GET["timescale"] == "minute") { echo 'checked="checked"'; } ?> /> minute
+				<input type="radio" name="timescale" value="minute" <?php if($_GET["timescale"] == "minute") { echo 'checked="checked"'; } ?> /> minute
 				<input type="radio" name="timescale" value="hour" <?php if($_GET["timescale"] == "hour") { echo 'checked="checked"'; } ?> /> hour
 				<input type="radio" name="timescale" value="day" <?php if($_GET["timescale"] == "day") { echo 'checked="checked"'; } ?> /> day
 				<input type="radio" name="timescale" value="week" <?php if($_GET["timescale"] != "minute" && $_GET["timescale"] != "hour" && $_GET["timescale"] != "day") { echo 'checked="checked"'; } ?> /> week
