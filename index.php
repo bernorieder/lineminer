@@ -23,11 +23,15 @@ $minfblikes = (isset($_GET["minfblikes"])) ? $_GET["minfblikes"]:0;
 $minytlikes = (isset($_GET["minytlikes"])) ? $_GET["minytlikes"]:0;
 $minretweets = (isset($_GET["minretweets"])) ? $_GET["minretweets"]:0;
 $minfavs = (isset($_GET["minfavs"])) ? $_GET["minfavs"]:0;
+$ukcoldate = (isset($_GET["ukcoldate"])) ? $_GET["ukcoldate"]:0;
+$ukcoltext = (isset($_GET["ukcoltext"])) ? $_GET["ukcoltext"]:0;
+$ukcolscore = (isset($_GET["ukcolscore"])) ? $_GET["ukcolscore"]:0;
+$minukscore = (isset($_GET["minukscore"])) ? $_GET["minukscore"]:0;
 $timescale = (isset($_GET["timescale"])) ? $_GET["timescale"]:"week";
 
 
 
-$_GET["startdate"] = (isset($_GET["startdate"])) ? $_GET["startdate"]:"2014-01-01";
+$_GET["startdate"] = (isset($_GET["startdate"])) ? $_GET["startdate"]:"2016-08-01";
 if(preg_match("/ [0-9]{2}:[0-9]{2}:[0-9]{2}$/", $_GET["startdate"])) {
 	$startdate = $_GET["startdate"];
 } else if(preg_match("/ [0-9]{2}:[0-9]{2}$/", $_GET["startdate"])) {
@@ -36,7 +40,7 @@ if(preg_match("/ [0-9]{2}:[0-9]{2}:[0-9]{2}$/", $_GET["startdate"])) {
 	$startdate .= $_GET["startdate"] . " 00:00:00";
 }
 
-$_GET["enddate"] = (isset($_GET["enddate"])) ? $_GET["enddate"]:"2015-01-01";
+$_GET["enddate"] = (isset($_GET["enddate"])) ? $_GET["enddate"]:"2016-10-01";
 if(preg_match("/ [0-9]{2}:[0-9]{2}:[0-9]{2}$/", $_GET["enddate"])) {
 	$enddate = $_GET["enddate"];
 } else if(preg_match("/ [0-9]{2}:[0-9]{2}$/", $_GET["enddate"])) {
@@ -135,7 +139,7 @@ if ($dh = opendir($stopwordsdir)) {
 <div id="if_description" class="if_structure">
 	<div class="rowTab">
 		<div class="fullTab">
-			BlaBla, explanation, FAQ, links, credits. Source code <a href="https://github.com/bernorieder/lineminer" target="_blank">available on github.</a>	
+			This tool allows for quick text searching through CSV/TSV files where each line is a dated unit of text. Source code <a href="https://github.com/bernorieder/lineminer" target="_blank">available on github.</a>	
 		</div>
 	</div>
 </div>
@@ -179,7 +183,7 @@ if ($dh = opendir($stopwordsdir)) {
 			<div class="leftTab">Search query:</div>
 			
 			<div class="rightTab">
-				<input type="text" name="query" value="<?php echo $query; ?>" /> (use [all] for no query, OR and AND, separate multiple queries with comma)
+				<input type="text" name="query" value="<?php echo $query; ?>" /> (leave empty for no query, OR and AND, separate multiple queries with comma)
 			</div>
 		</div>
 		
@@ -248,7 +252,7 @@ if ($dh = opendir($stopwordsdir)) {
 		
 		<div class="rowTab">
 			<div class="fullTab">
-				<input type="checkbox" name="incfbpost" <?php if($incfbpost != false) {  echo 'checked="checked"'; } ?> /> include lines where post text matches query</div>
+				<input type="checkbox" name="incfbpost" <?php if($incfbpost != false) {  echo 'checked="checked"'; } ?> /> include lines where post text matches query
 			</div>
 		</div>
 		
@@ -281,6 +285,24 @@ if ($dh = opendir($stopwordsdir)) {
 		<div class="rowTab">
 			<div class="fullTab">
 				filter comments below <input type="text" name="minytlikes" style="width:20px;" value="<?php echo $minytlikes; ?>" /> comment likes
+			</div>
+		</div>
+	</div>
+	
+	<div id="if_parameters_unknown" class="if_structure">
+		<div class="rowTab">
+			<div class="headTab">Unknown file parameters</div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="fullTab">
+				select columns (first column = 0): date = <input type="text" name="ukcoldate" style="width:20px;" value="<?php echo $ukcoldate; ?>" />&nbsp; text = <input type="text" name="ukcoltext" style="width:20px;" value="<?php echo $ukcoltext; ?>" />&nbsp; score = <input type="text" name="ukcolscore" style="width:20px;" value="<?php echo $ukcolscore; ?>" />
+			</div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="fullTab">
+				filter lines below <input type="text" name="minukscore" style="width:20px;" value="<?php echo $minukscore; ?>" /> score
 			</div>
 		</div>
 	</div>
@@ -346,6 +368,9 @@ while(($rawbuffer = fgets($fr)) !== false) {
 	} else if($filetype == "twitter") {
 		$unixdate = strtotime($buffer[2]);
 		$content = $buffer[4];	
+	} else if($filetype == "unknown") {
+		$unixdate = strtotime($buffer[$ukcoldate]);
+		$content = $buffer[$ukcoltext];
 	}
 	
 	// time filter
@@ -358,6 +383,8 @@ while(($rawbuffer = fgets($fr)) !== false) {
 		if($buffer[2] < $minytlikes) { continue; }
 	} else if($filetype == "twitter") {
 		if($buffer[10] < $minretweets || $buffer[11] < $minfavs) { continue; }
+	} else if($filetype == "unknown") {
+		if($buffer[$ukcolscore] < $minukscore) { continue; }
 	}
 	
 	// stream filtered lines to file
@@ -401,7 +428,7 @@ while(($rawbuffer = fgets($fr)) !== false) {
 
 		$incpost = ($incfbpost == true && preg_match("/".$query."/i",$postcontent)) ? true:false;
 
-		if(preg_match("/".$query."/i",$content) || $query == "all" || $incpost == true) {
+		if(preg_match("/".$query."/i",$content) || $incpost == true) {
 
 			if(!isset($datebins[$query][$date])) { $datebins[$query][$date] = array(); }
 			if(!isset($wordlists[$query][$date])) { $wordlists[$query][$date] = array(); }
