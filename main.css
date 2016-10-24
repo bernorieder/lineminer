@@ -20,6 +20,7 @@ table.wordlist,tr.wordlist,td.wordlist,th.wordlist { font-size: 11px; vertical-a
 #if_parameters_facebook { display:none; }
 #if_parameters_youtube { display:none; }
 #if_parameters_twitter { display:none; }
+#if_parameters_unknown { display:none; }
 
 #if_panel_context { display:none; width:1200px; }
 #if_panel_context_data { overflow:scroll; }
