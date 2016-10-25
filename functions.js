@@ -26,8 +26,8 @@ function loadFile(_file) {
 
 	$.getJSON( "examinefile.php", { file:_file }, function(_reply) {
 		
-		if(_reply.type == "facebook") {
-			$("[name='filetype']").val("facebook");
+		if(_reply.type == "facebook" || _reply.type == "facebook_topcomments") {
+			$("[name='filetype']").val(_reply.type);
 			$("#if_parameters").show();
 			$("#if_parameters_facebook").show();
 			$("#if_parameters_twitter").hide();
