@@ -13,7 +13,7 @@ include "functions.php";
 
 
 // ----- get URL parameters and do some parsing -----
-$query = (isset($_GET["query"])) ? $_GET["query"]:"barcelona";
+$query = (isset($_GET["query"])) ? $_GET["query"]:"";
 $language = (isset($_GET["language"])) ? $_GET["language"]:"english";
 $showfull = (isset($_GET["showfull"]) == "on") ? true:false;
 $getcontext = (isset($_GET["getcontext"]) == "on") ? true:false;
@@ -85,6 +85,7 @@ if ($dh = opendir($datadir)) {
 } else {
 	echo "Error: could not open files in data directory: " . $datadir;
 }
+asort($filenames);
 
 
 // ----- check for and load list of stopword files -----
@@ -130,7 +131,7 @@ if ($dh = opendir($stopwordsdir)) {
 <div id="if_header" class="if_structure">
 	<div class="rowTab">
 		<div class="fullTab">
-			<a href="<?php echo $httproot; ?>"><h1>lineminer</h1></a>
+			<a href="<?php echo $httproot; ?>"><h1>LineMiner</h1></a>
 		</div>
 	</div>
 </div>
@@ -139,7 +140,7 @@ if ($dh = opendir($stopwordsdir)) {
 <div id="if_description" class="if_structure">
 	<div class="rowTab">
 		<div class="fullTab">
-			This tool allows for quick text searching through CSV/TSV files where each line is a dated unit of text. Source code <a href="https://github.com/bernorieder/lineminer" target="_blank">available on github.</a>	
+			This tool allows for quick text searching through CSV/TSV files where each line is a timestamped unit of text. Source code <a href="https://github.com/bernorieder/lineminer" target="_blank">available on github.</a>	
 		</div>
 	</div>
 </div>
@@ -362,6 +363,10 @@ while(($rawbuffer = fgets($fr)) !== false) {
 		$unixdate = strtotime($buffer[4]);
 		$content = $buffer[8];
 		$postcontent = $buffer[3];
+	} else if($filetype == "facebook_topcomments") {
+		$unixdate = strtotime($buffer[5]);
+		$content = $buffer[4];
+		$postcontent = $buffer[1];
 	} else if($filetype == "youtube") {
 		$unixdate = strtotime($buffer[3]);
 		$content = $buffer[5];	
@@ -373,12 +378,15 @@ while(($rawbuffer = fgets($fr)) !== false) {
 		$content = $buffer[$ukcoltext];
 	}
 	
+	
 	// time filter
 	if($unixdate < strtotime($startdate) || $unixdate > strtotime($enddate)) { continue; }
 	
 	// filter lines below specified threshold
 	if($filetype == "facebook") {
 		if($buffer[10] < $minfblikes) { continue; }
+	} else if($filetype == "facebook_topcomments") {
+		if($buffer[6] < $minfblikes) { continue; }
 	} else if($filetype == "youtube") {
 		if($buffer[2] < $minytlikes) { continue; }
 	} else if($filetype == "twitter") {
@@ -573,7 +581,7 @@ if($getcontext) {
 		
 		
 		foreach($datelist as $date) {
-			if($filetype == "facebook") { $moreoptions = "&minfblikes=" . $minfblikes; }
+			if($filetype == "facebook" || $filetype == "facebook_topcomments") { $moreoptions = "&minfblikes=" . $minfblikes; }
 			if($filetype == "youtube") { $moreoptions = "&minytlikes=" . $minytlikes; }
 			if($filetype == "twitter") { $moreoptions = "&minfavs=" . $minfavs . "&minretweets=" . $minretweets; }
 			echo '<td class="wordlist"><a href="getcomments.php?date='.$date.'&timescale='.$timescale.'&filename='.$filename.'&query='.$query.'&filetype='.$filetype.$moreoptions.'" target="_blank">lines</a></td>';
