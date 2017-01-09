@@ -20,6 +20,8 @@ $getcontext = (isset($_GET["getcontext"]) == "on") ? true:false;
 $dooutput = (isset($_GET["dooutput"]) == "on") ? true:false;
 $incfbpost = (isset($_GET["incfbpost"]) == "on") ? true:false;
 $minfblikes = (isset($_GET["minfblikes"])) ? $_GET["minfblikes"]:0;
+$incredditpost = (isset($_GET["incredditpost"]) == "on") ? true:false;
+$minredditlikes = (isset($_GET["minredditlikes"])) ? $_GET["minfblikes"]:0;
 $minytlikes = (isset($_GET["minytlikes"])) ? $_GET["minytlikes"]:0;
 $minretweets = (isset($_GET["minretweets"])) ? $_GET["minretweets"]:0;
 $minfavs = (isset($_GET["minfavs"])) ? $_GET["minfavs"]:0;
@@ -290,6 +292,26 @@ if ($dh = opendir($stopwordsdir)) {
 		</div>
 	</div>
 	
+	
+	<div id="if_parameters_reddit" class="if_structure">
+		<div class="rowTab">
+			<div class="headTab">Reddit parameters</div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="fullTab">
+				<input type="checkbox" name="incredditpost" <?php if($incredditpost != false) {  echo 'checked="checked"'; } ?> /> include lines where post title matches query
+			</div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="fullTab">
+				filter comments below <input type="text" name="minredditlikes" style="width:20px;" value="<?php echo $minredditlikes; ?>" /> comment score
+			</div>
+		</div>
+	</div>
+	
+	
 	<div id="if_parameters_unknown" class="if_structure">
 		<div class="rowTab">
 			<div class="headTab">Unknown file parameters</div>
@@ -367,6 +389,10 @@ while(($rawbuffer = fgets($fr)) !== false) {
 		$unixdate = strtotime($buffer[5]);
 		$content = $buffer[4];
 		$postcontent = $buffer[1];
+	} else if($filetype == "reddit_comments") {
+		$unixdate = strtotime($buffer[8]);
+		$content = $buffer[12];
+		$postcontent = $buffer[2];
 	} else if($filetype == "youtube") {
 		$unixdate = strtotime($buffer[3]);
 		$content = $buffer[5];	
@@ -391,6 +417,8 @@ while(($rawbuffer = fgets($fr)) !== false) {
 		if($buffer[2] < $minytlikes) { continue; }
 	} else if($filetype == "twitter") {
 		if($buffer[10] < $minretweets || $buffer[11] < $minfavs) { continue; }
+	} else if($filetype == "reddit_comments") {
+		if($buffer[14] < $minredditlikes) { continue; }
 	} else if($filetype == "unknown") {
 		if($buffer[$ukcolscore] < $minukscore) { continue; }
 	}
@@ -434,7 +462,7 @@ while(($rawbuffer = fgets($fr)) !== false) {
 		if(!isset($wordlists[$query])) { $wordlists[$query] = array(); }
 		if(!isset($phrases[$query])) { $phrases[$query] = array(); }
 
-		$incpost = ($incfbpost == true && preg_match("/".$query."/i",$postcontent)) ? true:false;
+		$incpost = (($incfbpost == true || $incredditpost == true) && preg_match("/".$query."/i",$postcontent)) ? true:false;
 
 		if(preg_match("/".$query."/i",$content) || $incpost == true) {
 
