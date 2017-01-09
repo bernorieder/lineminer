@@ -690,6 +690,8 @@ if($getcontext) {
 
 <script type="text/javascript">
 
+	// todo: add full counts and per interval averages
+
     var data = new google.visualization.DataTable();
 
     data.addColumn('string', 'Date');
