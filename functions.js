@@ -32,6 +32,7 @@ function loadFile(_file) {
 			$("#if_parameters_facebook").show();
 			$("#if_parameters_twitter").hide();
 			$("#if_parameters_youtube").hide();
+			$("#if_parameters_reddit").hide();
 			$("#if_parameters_unknown").hide();
 			$("#if_filedetected_text").html("Netvizz file detected.");
 		}
@@ -42,6 +43,7 @@ function loadFile(_file) {
 			$("#if_parameters_facebook").hide();
 			$("#if_parameters_twitter").show();
 			$("#if_parameters_youtube").hide();
+			$("#if_parameters_reddit").hide();
 			$("#if_parameters_unknown").hide();
 			$("#if_filedetected_text").html("DMI-TCAT file detected.");
 		}
@@ -52,8 +54,20 @@ function loadFile(_file) {
 			$("#if_parameters_facebook").hide();
 			$("#if_parameters_twitter").hide();
 			$("#if_parameters_youtube").show();
+			$("#if_parameters_reddit").hide();
 			$("#if_parameters_unknown").hide();
 			$("#if_filedetected_text").html("YouTube Data Tools file detected.");
+		}
+		
+		if(_reply.type == "reddit_comments") {
+			$("[name='filetype']").val(_reply.type);
+			$("#if_parameters").show();
+			$("#if_parameters_facebook").hide();
+			$("#if_parameters_twitter").hide();
+			$("#if_parameters_youtube").hide();
+			$("#if_parameters_reddit").show();
+			$("#if_parameters_unknown").hide();
+			$("#if_filedetected_text").html("Reddit comment file detected.");
 		}
 		
 		if(_reply.type == "unknown") {
@@ -62,6 +76,7 @@ function loadFile(_file) {
 			$("#if_parameters_facebook").hide();
 			$("#if_parameters_twitter").hide();
 			$("#if_parameters_youtube").hide();
+			$("#if_parameters_reddit").hide();
 			$("#if_parameters_unknown").show();
 			$("#if_filedetected_text").html("Unknown file detected. Select column definitions below.");
 		}
