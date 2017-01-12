@@ -16,7 +16,8 @@ function onloadTodo() {
 	}
 	
 	var _dooutput = getURLParameter("dooutput");
-	if(_dooutput == "on") {
+	var _dosummary = getURLParameter("dosummary");
+	if(_dooutput == "on" || _dosummary == "on") {
 		$("#if_panel_downloads").show();
 	}
 }
