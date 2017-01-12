@@ -18,6 +18,7 @@ $language = (isset($_GET["language"])) ? $_GET["language"]:"english";
 $showfull = (isset($_GET["showfull"]) == "on") ? true:false;
 $getcontext = (isset($_GET["getcontext"]) == "on") ? true:false;
 $dooutput = (isset($_GET["dooutput"]) == "on") ? true:false;
+$dosummary = (isset($_GET["dosummary"]) == "on") ? true:false;
 $incfbpost = (isset($_GET["incfbpost"]) == "on") ? true:false;
 $minfblikes = (isset($_GET["minfblikes"])) ? $_GET["minfblikes"]:0;
 $incredditpost = (isset($_GET["incredditpost"]) == "on") ? true:false;
@@ -244,7 +245,11 @@ if ($dh = opendir($stopwordsdir)) {
 		</div>
 		
 		<div class="rowTab">
-			<div class="fullTab"><input type="checkbox" name="dooutput" <?php if($dooutput != false) {  echo 'checked="checked"'; } ?> /> write filtered lines to new file (use wisely)</div>
+			<div class="fullTab"><input type="checkbox" name="dosummary" <?php if($dosummary != false) {  echo 'checked="checked"'; } ?> /> create a summary file for the query</div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="fullTab"><input type="checkbox" name="dooutput" <?php if($dooutput != false) {  echo 'checked="checked"'; } ?> /> write filtered lines to new file (only for one query,use wisely)</div>
 		</div>
 	</div>
 	
@@ -344,7 +349,7 @@ if ($dh = opendir($stopwordsdir)) {
 
 // check query
 if(isset($_GET["query"])) {
-	$query = preg_replace("/ OR /","|",$_GET["query"]);
+	$query = preg_replace("/ or /","|",strtolower($_GET["query"]));
 	$queries = explode(",",$query);
 } else {
 	exit;
@@ -354,7 +359,8 @@ if(isset($_GET["query"])) {
 $stopwords = getstopwords($language);
 
 $filename = $datadir . "/" . $_GET["fileselect"];
-$filename_out = $outdir . "/filtered_" . $query . "_" . $_GET["fileselect"];
+$filename_out = $outdir . "/filtered_" . md5($query) . "_" . $_GET["fileselect"];
+$filename_summary = $outdir . "/summary_" . md5($query) . ".csv";
 $filetype = $_GET["filetype"];
 $separator = (preg_match("/\.tab/",$_GET["fileselect"])) ? "\t":",";
 
@@ -469,28 +475,42 @@ while(($rawbuffer = fgets($fr)) !== false) {
 	$datebins_full[$date]++;
 
 
+	//print_r($queries); exit;
+
+
 	foreach($queries as $query) {
+		
+		$content = strtolower($content);
 
 		if(!isset($datebins[$query])) { $datebins[$query] = array(); }
 		if(!isset($wordlists[$query])) { $wordlists[$query] = array(); }
 		if(!isset($phrases[$query])) { $phrases[$query] = array(); }
 
 		$incpost = (($incfbpost == true || $incredditpost == true) && preg_match("/".addslashes($query)."/i",$postcontent)) ? true:false;
+		
+		$found = false;
+		
+		if(preg_match("/ and /i",$query)) {
 
-		//print_r($content); exit;
+			$found = true;
 
-		if(preg_match("/".addslashes($query)."/i",$content) || $incpost == true) {
+			$parts = explode(" and ", $query);
+
+			foreach($parts as $part) {
+				if(!preg_match("/".$part."/", $content)) { $found = false; }
+			}
+		}
+
+		if(preg_match("/".addslashes($query)."/i",$content) || $incpost == true || $found == true) {
 
 			if(!isset($datebins[$query][$date])) { $datebins[$query][$date] = array(); }
 			if(!isset($wordlists[$query][$date])) { $wordlists[$query][$date] = array(); }
 			if(!isset($phrases[$query][$date])) { $phrases[$query][$date] = array(); }
 
 			$datebins[$query][$date][] = ($getcomments) ? $buffer:"x";
-
-
-				// stream filtered lines to file
-			if($dooutput) { fwrite($fw, $rawbuffer); }
-
+			
+			// stream filtered lines to file
+			if($dooutput && count($queries) <= 1) { fwrite($fw, $rawbuffer); }
 
 			if($getcontext) {
 
@@ -557,6 +577,34 @@ foreach($queries as $query) {
 	ksort($datebins[$query]);
 }
 
+
+
+
+if($dosummary) {
+	
+	$outlist = "query,count\n";
+	
+	//print_r($datebins);
+	
+	foreach($datebins as $query => $bin) {
+		
+		$outlist .= $query . ",";
+		
+		$counter = 0;
+		
+		foreach($bin as $days) {
+			$counter += count($days);
+		}
+		
+		$outlist .= $counter . "\n";
+		
+	}
+	
+	file_put_contents($filename_summary, $outlist);
+}
+
+
+
 ?>
 
 <div id="if_panel" class="if_structure">
@@ -580,6 +628,20 @@ foreach($queries as $query) {
 				?>
 			</div>
 		</div>
+		
+		<div class="rowTab">
+			<div id="if_panel_downloads_data" class="fullTab">
+				<?php
+				
+				if($dosummary) {
+					
+					echo 'Filtered file: <a href="'.$filename_summary.'" download>'.$filename_summary.'</a>'; 
+				}
+					
+				?>
+			</div>
+		</div>
+		
 	</div>
 	
 	<div class="rowTab">
