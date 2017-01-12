@@ -386,7 +386,7 @@ while(($rawbuffer = fgets($fr)) !== false) {
 		$content = $buffer[8];
 		$postcontent = $buffer[3];
 	} else if($filetype == "facebook_topcomments") {
-		$unixdate = strtotime($buffer[5]);
+		$unixdate = strtotime($buffer[2]);
 		$content = $buffer[4];
 		$postcontent = $buffer[1];
 	} else if($filetype == "reddit_comments") {
@@ -404,9 +404,20 @@ while(($rawbuffer = fgets($fr)) !== false) {
 		$content = $buffer[$ukcoltext];
 	}
 	
+
 	
 	// time filter
 	if($unixdate < strtotime($startdate) || $unixdate > strtotime($enddate)) { continue; }
+	
+	/*
+	print_r($unixdate);
+	
+	print_r($content);
+	
+	print(strtotime($startdate));
+	
+	exit;
+	*/
 	
 	// filter lines below specified threshold
 	if($filetype == "facebook") {
@@ -423,8 +434,9 @@ while(($rawbuffer = fgets($fr)) !== false) {
 		if($buffer[$ukcolscore] < $minukscore) { continue; }
 	}
 	
-	// stream filtered lines to file
-	if($dooutput) { fwrite($fw, $rawbuffer); }
+	//print_r($content);
+	
+
 	
 	// get out significant objects
 	//preg_match("/http(.*?) /",$content, $matches);
@@ -456,21 +468,29 @@ while(($rawbuffer = fgets($fr)) !== false) {
 
 	$datebins_full[$date]++;
 
+
 	foreach($queries as $query) {
 
 		if(!isset($datebins[$query])) { $datebins[$query] = array(); }
 		if(!isset($wordlists[$query])) { $wordlists[$query] = array(); }
 		if(!isset($phrases[$query])) { $phrases[$query] = array(); }
 
-		$incpost = (($incfbpost == true || $incredditpost == true) && preg_match("/".$query."/i",$postcontent)) ? true:false;
+		$incpost = (($incfbpost == true || $incredditpost == true) && preg_match("/".addslashes($query)."/i",$postcontent)) ? true:false;
 
-		if(preg_match("/".$query."/i",$content) || $incpost == true) {
+		//print_r($content); exit;
+
+		if(preg_match("/".addslashes($query)."/i",$content) || $incpost == true) {
 
 			if(!isset($datebins[$query][$date])) { $datebins[$query][$date] = array(); }
 			if(!isset($wordlists[$query][$date])) { $wordlists[$query][$date] = array(); }
 			if(!isset($phrases[$query][$date])) { $phrases[$query][$date] = array(); }
 
 			$datebins[$query][$date][] = ($getcomments) ? $buffer:"x";
+
+
+				// stream filtered lines to file
+			if($dooutput) { fwrite($fw, $rawbuffer); }
+
 
 			if($getcontext) {
 
