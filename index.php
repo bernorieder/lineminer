@@ -9,71 +9,7 @@
 
 // ----- link external files -----
 include "config.php";
-include "functions.php";
-
-
-// ----- get URL parameters and do some parsing -----
-$query = (isset($_GET["query"])) ? $_GET["query"]:"";
-$language = (isset($_GET["language"])) ? $_GET["language"]:"english";
-$showfull = (isset($_GET["showfull"]) == "on") ? true:false;
-$getcontext = (isset($_GET["getcontext"]) == "on") ? true:false;
-$dooutput = (isset($_GET["dooutput"]) == "on") ? true:false;
-$dosummary = (isset($_GET["dosummary"]) == "on") ? true:false;
-$incfbpost = (isset($_GET["incfbpost"]) == "on") ? true:false;
-$minfblikes = (isset($_GET["minfblikes"])) ? $_GET["minfblikes"]:0;
-$incredditpost = (isset($_GET["incredditpost"]) == "on") ? true:false;
-$minredditlikes = (isset($_GET["minredditlikes"])) ? $_GET["minfblikes"]:0;
-$minytlikes = (isset($_GET["minytlikes"])) ? $_GET["minytlikes"]:0;
-$minretweets = (isset($_GET["minretweets"])) ? $_GET["minretweets"]:0;
-$minfavs = (isset($_GET["minfavs"])) ? $_GET["minfavs"]:0;
-$ukcoldate = (isset($_GET["ukcoldate"])) ? $_GET["ukcoldate"]:0;
-$ukcoltext = (isset($_GET["ukcoltext"])) ? $_GET["ukcoltext"]:0;
-$ukcolscore = (isset($_GET["ukcolscore"])) ? $_GET["ukcolscore"]:0;
-$minukscore = (isset($_GET["minukscore"])) ? $_GET["minukscore"]:0;
-$timescale = (isset($_GET["timescale"])) ? $_GET["timescale"]:"week";
-
-
-
-$_GET["startdate"] = (isset($_GET["startdate"])) ? $_GET["startdate"]:"2016-08-01";
-if(preg_match("/ [0-9]{2}:[0-9]{2}:[0-9]{2}$/", $_GET["startdate"])) {
-	$startdate = $_GET["startdate"];
-} else if(preg_match("/ [0-9]{2}:[0-9]{2}$/", $_GET["startdate"])) {
-	$startdate = $_GET["startdate"] . ":00";
-} else {
-	$startdate .= $_GET["startdate"] . " 00:00:00";
-}
-
-$_GET["enddate"] = (isset($_GET["enddate"])) ? $_GET["enddate"]:"2016-10-01";
-if(preg_match("/ [0-9]{2}:[0-9]{2}:[0-9]{2}$/", $_GET["enddate"])) {
-	$enddate = $_GET["enddate"];
-} else if(preg_match("/ [0-9]{2}:[0-9]{2}$/", $_GET["enddate"])) {
-	$enddate .= $_GET["enddate"] . ":59";
-} else {
-	$enddate .= $_GET["enddate"] . " 23:59:59";
-}
-
-//echo $startdate . "|" . $enddate;
-
-
-// ----- make calculations for interval -----
-switch ($timescale) {
-	case "minute":
-		$dateformat = "m-d H-i";
-		$seconds = 60;
-		break;
-	case "hour":
-		$dateformat = "m-d H";
-		$seconds = 3600;
-		break;
-	case "day":
-		$dateformat = "Y-m-d";
-		$seconds = 86400;
-		break;
-	case "week":
-		$dateformat = "o-W";
-		$seconds = 604800;
-		break;
-}
+include "./common/functions.php";
 
 
 // ----- check for and load list of data files -----
@@ -115,8 +51,9 @@ if ($dh = opendir($stopwordsdir)) {
 
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
-	<script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
-	<script type="text/javascript" src="functions.js"></script>
+	<script type="text/javascript" src="./common/jquery-3.1.1.min.js"></script>
+	<script type="text/javascript" src="./common/functions.js"></script>
+
 	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
 
 	<script type="text/javascript">
@@ -124,70 +61,107 @@ if ($dh = opendir($stopwordsdir)) {
 	google.load("visualization", "1", {packages:["corechart"]});
 
 	</script>
-
+	
 	<link rel="stylesheet" type="text/css" href="main.css">
 </head>
 
 <body onload="onloadTodo();">
 
+<div id="fullpage">
 
-<div id="if_header" class="if_structure">
-	<div class="rowTab">
-		<div class="fullTab">
-			<a href="<?php echo $httproot; ?>"><h1>LineMiner</h1></a>
+	<div id="if_header" class="if_structure">
+		<div class="sectionTab">
+			<h1>LineMiner</h1>
 		</div>
 	</div>
-</div>
-
-
-<div id="if_description" class="if_structure">
-	<div class="rowTab">
-		<div class="fullTab">
-			This tool allows for quick text searching through CSV/TSV files where each line is a timestamped unit of text. Source code <a href="https://github.com/bernorieder/lineminer" target="_blank">available on github.</a>	
-		</div>
-	</div>
-</div>
-
-
-
-<div id="if_file" class="if_structure">
-	<form action="index.php" method="get">
-	<input type="hidden" name="filetype" value="<?php echo $_GET["filetype"]; ?>" />
 	
-	<div class="rowTab">
-		<div class="leftTab">Choose a file:</div>
-		
-		<div class="rightTab">
-			<select name="fileselect" onchange="loadFile(this.value)">
-				<option value="none">select</option>
-				<?php
-				foreach($filenames as $filename) {
-					$selectmarker = ($filename == $_GET["file"]) ? "selected":"";
-					echo '<option value="'.$filename.'" '.$selectmarker.'>'.$filename.'</option>';
-				}
-				?>
-			</select>
+	
+	<div id="if_description" class="if_structure">
+		<div class="rowTab">
+			<div class="fullTab">
+				This tool allows for quick text searching through CSV/TSV files where each line is a timestamped unit of text.
+				Source code <a href="https://github.com/bernorieder/lineminer" target="_blank">available on github.</a>	
+			</div>
 		</div>
 	</div>
-</div>
-
-<div id="if_filedetected" class="if_structure">
-	<div class="rowTab">
-		<div class="comTab" id="if_filedetected_text"></div>
-	</div>
-</div>
-
-<div id="if_parameters" class="if_structure">
-	<div id="if_parameters_common" class="if_structure">
+		
+	
+	<div id="if_file" class="if_structure">
+		
+		<form action="index.php" method="get" onsubmit="sendForm(); return false;">
+		
 		<div class="rowTab">
-			<div class="headTab">Common parameters</div>
+			<div class="sectionTab"><h2>Choose a file to work with</h2></div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="fullTab">
+				This tool works on files put into a data directory on the machine it runs. Since it is designed to run on very big files,
+				there is no upload function - talk to your administrator for how to add files.
+			</div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="leftTab">Files in data directory:</div>
+			
+			<div class="rightTab">
+				<select name="datafile" onchange="loadFile(this.value)">
+					<option value="none">select</option>
+					<?php
+					foreach($filenames as $filename) {
+						echo '<option value="'.$filename.'">'.$filename.'</option>';
+					}
+					?>
+				</select>
+			</div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="comTab" id="if_filedetected_text"></div>
+		</div>
+	</div>
+	
+	
+	<div id="if_parameters" class="if_structure">
+			
+		<div class="rowTab">
+			<div class="sectionTab"><h2>Define your analysis</h2></div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="sectionTab"><h3>Choose the file columns to use</h3></div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="leftTab">Timestamp:</div>
+			<div class="rightTab" name="col_date">
+				
+			</div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="leftTab">Text: <a onclick="createColelement('col_text')">add</a></div>
+			<div class="rightTab" name="col_text">
+				
+			</div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="leftTab">Score: <a onclick="createColelement('col_score')">add</a></div>
+			<div class="rightTab" name="col_score">
+				
+			</div>
+		</div>
+
+		<div class="rowTab">
+			<div class="sectionTab"><h3>Search parameters</h3></div>
 		</div>
 	
 		<div class="rowTab">
 			<div class="leftTab">Search query:</div>
 			
 			<div class="rightTab">
-				<input type="text" name="query" value="<?php echo $query; ?>" /> (leave empty for no query, OR and AND, separate multiple queries with comma)
+				<input type="text" name="query" /> (leave empty for no query, OR and AND, separate multiple queries with comma)
 			</div>
 		</div>
 		
@@ -198,11 +172,7 @@ if ($dh = opendir($stopwordsdir)) {
 				<select name="language">
 					<?php
 					foreach($stopfiles as $lang => $file) {
-						if($lang == $language) {
-							echo '<option value="'.$lang.'" selected>'.$lang.'</option>';
-						} else {
-							echo '<option value="'.$lang.'">'.$lang.'</option>';
-						}
+						echo '<option value="'.$lang.'">'.$lang.'</option>';
 					}
 					?>
 				</select>
@@ -213,7 +183,7 @@ if ($dh = opendir($stopwordsdir)) {
 			<div class="leftTab">Startdate:</div>
 			
 			<div class="rightTab">
-				<input type="text" name="startdate" value="<?php echo $_GET["startdate"]; ?>" /> YYYY-MM-DD or YYYY-MM-DD HH:MM
+				<input type="text" name="startdate" /> YYYY-MM-DD or YYYY-MM-DD HH:MM
 			</div>
 		</div>
 		
@@ -221,7 +191,7 @@ if ($dh = opendir($stopwordsdir)) {
 			<div class="leftTab">Enddate:</div>
 			
 			<div class="rightTab">
-				<input type="text" name="enddate" value="<?php echo $_GET["enddate"]; ?>" /> YYYY-MM-DD or YYYY-MM-DD HH:MM
+				<input type="text" name="enddate" /> YYYY-MM-DD or YYYY-MM-DD HH:MM
 			</div>
 		</div>
 		
@@ -229,141 +199,53 @@ if ($dh = opendir($stopwordsdir)) {
 			<div class="leftTab">Time interval:</div>
 			
 			<div class="rightTab">
-				<input type="radio" name="timescale" value="minute" <?php if($_GET["timescale"] == "minute") { echo 'checked="checked"'; } ?> /> minute
-				<input type="radio" name="timescale" value="hour" <?php if($_GET["timescale"] == "hour") { echo 'checked="checked"'; } ?> /> hour
-				<input type="radio" name="timescale" value="day" <?php if($_GET["timescale"] == "day") { echo 'checked="checked"'; } ?> /> day
-				<input type="radio" name="timescale" value="week" <?php if($_GET["timescale"] != "minute" && $_GET["timescale"] != "hour" && $_GET["timescale"] != "day") { echo 'checked="checked"'; } ?> /> week
+				<input type="radio" name="timescale" value="minute" /> minute
+				<input type="radio" name="timescale" value="hour" /> hour
+				<input type="radio" name="timescale" value="day"  /> day
+				<input type="radio" name="timescale" value="week"  /> week
 			</div>
 		</div>
 		
+		
 		<div class="rowTab">
-			<div class="fullTab"><input type="checkbox" name="showfull" <?php if($showfull != false) {  echo 'checked="checked"'; } ?> /> show full count on top linegraph </div>
+			<div class="sectionTab"><h3>Analysis options</h3></div>
+		</div>
+
+		<div class="rowTab">
+			<div class="fullTab"><input type="checkbox" name="showfull" /> show full count on top linegraph </div>
 		</div>
 		
 		<div class="rowTab">
-			<div class="fullTab"><input type="checkbox" name="getcontext" <?php if($getcontext != false) {  echo 'checked="checked"'; } ?> /> show word context</div>
+			<div class="fullTab"><input type="checkbox" name="getcontext" /> show word context</div>
 		</div>
 		
 		<div class="rowTab">
-			<div class="fullTab"><input type="checkbox" name="dosummary" <?php if($dosummary != false) {  echo 'checked="checked"'; } ?> /> create a summary file for the query</div>
+			<div class="fullTab"><input type="checkbox" name="dosummary" /> create a summary file for the query</div>
 		</div>
 		
 		<div class="rowTab">
-			<div class="fullTab"><input type="checkbox" name="dooutput" <?php if($dooutput != false) {  echo 'checked="checked"'; } ?> /> write filtered lines to new file (only for one query,use wisely)</div>
-		</div>
-	</div>
-	
-	<div id="if_parameters_facebook" class="if_structure">
-		<div class="rowTab">
-			<div class="headTab">Facebook parameters</div>
+			<div class="fullTab"><input type="checkbox" name="dooutput" /> write filtered lines to new file (use wisely)</div>
 		</div>
 		
-		<div class="rowTab">
-			<div class="fullTab">
-				<input type="checkbox" name="incfbpost" <?php if($incfbpost != false) {  echo 'checked="checked"'; } ?> /> include lines where post text matches query
-			</div>
-		</div>
 		
-		<div class="rowTab">
-			<div class="fullTab">
-				filter comments below <input type="text" name="minfblikes" style="width:20px;" value="<?php echo $minfblikes; ?>" /> comment likes
-			</div>
-		</div>
-	</div>
-	
-	<div id="if_parameters_twitter" class="if_structure">
-		<div class="rowTab">
-			<div class="headTab">Twitter parameters</div>
-		</div>
-		
-		<div class="rowTab">
-			<div class="fullTab">
-				filter tweets below
-				<input type="text" name="minretweets" style="width:20px;" value="<?php echo $minretweets; ?>" /> retweets and
-				<input type="text" name="minfavs" style="width:20px;" value="<?php echo $minfavs; ?>" /> favorites 
-			</div>
-		</div>
-	</div>
-	
-	<div id="if_parameters_youtube" class="if_structure">
-		<div class="rowTab">
-			<div class="headTab">YouTube parameters</div>
-		</div>
-		
-		<div class="rowTab">
-			<div class="fullTab">
-				filter comments below <input type="text" name="minytlikes" style="width:20px;" value="<?php echo $minytlikes; ?>" /> comment likes
-			</div>
-		</div>
-	</div>
-	
-	
-	<div id="if_parameters_reddit" class="if_structure">
-		<div class="rowTab">
-			<div class="headTab">Reddit parameters</div>
-		</div>
-		
-		<div class="rowTab">
-			<div class="fullTab">
-				<input type="checkbox" name="incredditpost" <?php if($incredditpost != false) {  echo 'checked="checked"'; } ?> /> include lines where post title matches query
-			</div>
-		</div>
-		
-		<div class="rowTab">
-			<div class="fullTab">
-				filter comments below <input type="text" name="minredditlikes" style="width:20px;" value="<?php echo $minredditlikes; ?>" /> comment score
-			</div>
-		</div>
-	</div>
-	
-	
-	<div id="if_parameters_unknown" class="if_structure">
-		<div class="rowTab">
-			<div class="headTab">Unknown file parameters</div>
-		</div>
-		
-		<div class="rowTab">
-			<div class="fullTab">
-				select columns (first column = 0): date = <input type="text" name="ukcoldate" style="width:20px;" value="<?php echo $ukcoldate; ?>" />&nbsp; text = <input type="text" name="ukcoltext" style="width:20px;" value="<?php echo $ukcoltext; ?>" />&nbsp; score = <input type="text" name="ukcolscore" style="width:20px;" value="<?php echo $ukcolscore; ?>" />
-			</div>
-		</div>
-		
-		<div class="rowTab">
-			<div class="fullTab">
-				filter lines below <input type="text" name="minukscore" style="width:20px;" value="<?php echo $minukscore; ?>" /> score
-			</div>
-		</div>
-	</div>
-	
-	<div id="if_parameters_submit" class="if_structure">
 		<div class="rowTab">
 			<div class="fullTab">
 				<input type="submit" />
 			</div>
 		</div>		
+		
+		</form>
 	</div>
-	</form>
-</div>
 
 <?php
 
-// check query
-if(isset($_GET["query"])) {
-	$query = preg_replace("/ or /","|",strtolower($_GET["query"]));
-	$queries = explode(",",$query);
-} else {
+// if there's no file, exit
+if(!isset($_GET["datafile"])) {
+	echo '</body></html>';
 	exit;
-}
+}  
 
-// get stopword list
-$stopwords = getstopwords($language);
-
-$filename = $datadir . "/" . $_GET["fileselect"];
-$filename_out = $outdir . "/filtered_" . md5($query) . "_" . $_GET["fileselect"];
-$filename_summary = $outdir . "/summary_" . md5($query) . ".csv";
-$filetype = $_GET["filetype"];
-$separator = (preg_match("/\.tab/",$_GET["fileselect"])) ? "\t":",";
-
+// ----- base variables -----
 $datebins = array();
 $datebins_full = array();
 $wordlists = array();
@@ -371,167 +253,209 @@ $wordlist_full = array();
 $phrases = array();
 
 
-$fr = fopen($filename,'r');
-if($dooutput) { $fw = fopen($filename_out,'w'); }
-$counter = 0;
+// ----- get GET parameters and do some parsing -----
+$query = (isset($_GET["query"])) ? urldecode($_GET["query"]):"";
+$query = preg_replace("/ or /","|",strtolower($_GET["query"]));
+$queries = explode(",",$query);
+foreach($queries as $query) {
+	$datebins[$query] = array();
+	$wordlists[$query] = array();
+	$phrases[$query] = array();
+}
 
-// ----- main file loop -----
+
+$col_date = urldecode($_GET["col_date"]);
+$cols_text = explode(",", urldecode($_GET["cols_text"]));
+$cols_score_tmp = explode(",", urldecode($_GET["cols_score"]));
+for($i = 0; $i < count($cols_score_tmp); $i++) {
+	$tmp = explode("|", $cols_score_tmp[$i]);
+	$cols_score[$tmp[0]] = $tmp[1];
+}
+
+$datafile = urldecode($_GET["datafile"]);
+
+$timescale = ($_GET["timescale"] == "") ? $_GET["timescale"]:"week";
+
+$language = (isset($_GET["language"])) ? urldecode($_GET["language"]):"english";
+$stopwords = getstopwords($language);
+
+$showfull = ($_GET["showfull"] == "true") ? true:false;
+$getcontext = ($_GET["getcontext"] == "true") ? true:false;
+$dooutput = ($_GET["dooutput"] == "true") ? true:false;
+$dosummary = ($_GET["dosummary"] == "true") ? true:false;
+
+$_GET["startdate"] = ($_GET["startdate"] != "") ? $_GET["startdate"]:"1971-01-01";
+if(preg_match("/ [0-9]{2}:[0-9]{2}:[0-9]{2}$/", $_GET["startdate"])) {
+	$startdate = $_GET["startdate"];
+} else if(preg_match("/ [0-9]{2}:[0-9]{2}$/", $_GET["startdate"])) {
+	$startdate = $_GET["startdate"] . ":00";
+} else {
+	$startdate .= $_GET["startdate"] . " 00:00:00";
+}
+
+$_GET["enddate"] = ($_GET["enddate"]  != "") ? $_GET["enddate"]:date("Y-m-d");
+if(preg_match("/ [0-9]{2}:[0-9]{2}:[0-9]{2}$/", $_GET["enddate"])) {
+	$enddate = $_GET["enddate"];
+} else if(preg_match("/ [0-9]{2}:[0-9]{2}$/", $_GET["enddate"])) {
+	$enddate .= $_GET["enddate"] . ":59";
+} else {
+	$enddate .= $_GET["enddate"] . " 23:59:59";
+}
+
+//echo $startdate . " " . $enddate; exit;
+
+
+// ----- make calculations for timescale -----
+switch ($timescale) {
+	case "minute":
+		$dateformat = "m-d H-i";
+		$seconds = 60;
+		break;
+	case "hour":
+		$dateformat = "m-d H";
+		$seconds = 3600;
+		break;
+	case "day":
+		$dateformat = "Y-m-d";
+		$seconds = 86400;
+		break;
+	case "week":
+		$dateformat = "o-W";
+		$seconds = 604800;
+		break;
+}
+
+
+$filename_out = "filtered_" . md5($query) . "_" . $datafile;
+$filename_summary = "summary_" . md5($query) . ".csv";
+
+$extension = substr($filename, strlen($filename) - 3);
+$delimiter = ($extension == "tab" || $extension == "tsv") ? "\t":",";
+
+
+$fr = fopen($datadir . $datafile,"r");
+if($dooutput) { $fw = fopen($outdir . $filename_out,"w"); }
+$counter = 0;
+$oldestdate = strtotime($enddate);
+$newestdate = strtotime($startdate);
+
+//exit;
+
+// ----- main line loop -----
 while(($rawbuffer = fgets($fr)) !== false) {
 
-	if($counter == 0) {			// jump first line
+	if($counter == 0) {			// first line is different
+		
 		if($dooutput) { fwrite($fw, $rawbuffer); }
+		
+		$buffer = str_getcsv(preg_replace("/\xEF\xBB\xBF/","",$rawbuffer),$delimiter);
+		
+		for($i = 0; $i < count($buffer); $i++) {
+			
+			if($col_date == $buffer[$i]) { $colloc_date = $i; }
+			if(in_array($buffer[$i],$cols_text)) { $collocs_text[] = $i; }
+			if(isset($cols_score[$buffer[$i]])) { $collocs_score[] = array($i,$cols_score[$buffer[$i]]); }
+		}
+		
 		$counter++;
+		
 		continue;
 	}
-
-	$buffer = str_getcsv($rawbuffer,$separator,'"');
-
-	// select appropriate colums
-	if($filetype == "facebook") {
-		$unixdate = strtotime($buffer[4]);
-		$content = $buffer[8];
-		$postcontent = $buffer[3];
-	} else if($filetype == "facebook_topcomments") {
-		$unixdate = strtotime($buffer[2]);
-		$content = $buffer[4];
-		$postcontent = $buffer[1];
-	} else if($filetype == "reddit_comments") {
-		$unixdate = strtotime($buffer[8]);
-		$content = $buffer[12];
-		$postcontent = $buffer[2];
-	} else if($filetype == "youtube") {
-		$unixdate = strtotime($buffer[3]);
-		$content = $buffer[5];	
-	} else if($filetype == "twitter") {
-		$unixdate = strtotime($buffer[2]);
-		$content = $buffer[4];	
-	} else if($filetype == "unknown") {
-		$unixdate = strtotime($buffer[$ukcoldate]);
-		$content = $buffer[$ukcoltext];
-	}
 	
-
+	// separate line to work on
+	$buffer = str_getcsv($rawbuffer,$delimiter,'"');
+	
 	
 	// time filter
+	$unixdate = strtotime($buffer[$colloc_date]);
 	if($unixdate < strtotime($startdate) || $unixdate > strtotime($enddate)) { continue; }
+	if($unixdate < $oldestdate) { $oldestdate = $unixdate; }
+	if($unixdate > $newestdate) { $newestdate = $unixdate; }
 	
-	/*
-	print_r($unixdate);
-	
-	print_r($content);
-	
-	print(strtotime($startdate));
-	
-	exit;
-	*/
-	
-	// filter lines below specified threshold
-	if($filetype == "facebook") {
-		if($buffer[10] < $minfblikes) { continue; }
-	} else if($filetype == "facebook_topcomments") {
-		if($buffer[6] < $minfblikes) { continue; }
-	} else if($filetype == "youtube") {
-		if($buffer[2] < $minytlikes) { continue; }
-	} else if($filetype == "twitter") {
-		if($buffer[10] < $minretweets || $buffer[11] < $minfavs) { continue; }
-	} else if($filetype == "reddit_comments") {
-		if($buffer[14] < $minredditlikes) { continue; }
-	} else if($filetype == "unknown") {
-		if($buffer[$ukcolscore] < $minukscore) { continue; }
-	}
-	
-	//print_r($content);
-	
-
-	
-	// get out significant objects
-	//preg_match("/http(.*?) /",$content, $matches);
-	//print_r($matches[0]);
-	
-	//echo "<br />";
-	
-	//preg_match("/ #(.*?) /",$content, $matches);
-	//	print_r($matches[0]);
-	
-
-	// clean up content
-	if($getcontext) {
-		//$content = preg_replace("/[\.\"\'\!\?\(\);,¿:]/", " ", $content); // currently also filters out URLs 
-		//$content = preg_replace("/[\n\r]/", " ", $content);
-		//$content = preg_replace("/\s+/", " ", $content);
-		//$content = preg_replace("/\W+/", " ", $content);
-		$content = preg_replace("/http.+?( |$)/i","", $content);
-		$content = preg_replace("/[^a-z0-9\p{L}]+/iu"," ", $content);
-		$content = trim($content);
-		$content = strtolower($content);
-	}
-	//echo $content;
-
 	$date = date($dateformat,$unixdate);
 	if(!isset($datebins_full[$date])) {
 		$datebins_full[$date] = 0;
 	}
-
 	$datebins_full[$date]++;
-
-
-	//print_r($queries); exit;
-
-
+	
+	
+	// score filter
+	foreach($collocs_score as $colloc_score) {
+		if(intval($buffer[$colloc_score[0]]) < intval($colloc_score[1])) { continue 2; }
+	}
+	
+	// content filter
+	$content = "";
+	foreach($collocs_text as $colloc_text) {
+		$content .= $buffer[$colloc_text] . " ";
+	}
+	
+	$found = false;
+	$queries_found = array();			// we want to remeber found queries for later to reduce overhead
 	foreach($queries as $query) {
-		
-		$content = strtolower($content);
-
-		if(!isset($datebins[$query])) { $datebins[$query] = array(); }
-		if(!isset($wordlists[$query])) { $wordlists[$query] = array(); }
-		if(!isset($phrases[$query])) { $phrases[$query] = array(); }
-
-		$incpost = (($incfbpost == true || $incredditpost == true) && preg_match("/".addslashes($query)."/i",$postcontent)) ? true:false;
-		
-		$found = false;
 		
 		if(preg_match("/ and /i",$query)) {
 
-			$found = true;
-
+			$andfound = true;
 			$parts = explode(" and ", $query);
 
 			foreach($parts as $part) {
-				if(!preg_match("/".$part."/", $content)) { $found = false; }
+				if(!preg_match("/".addslashes($part)."/i", $content)) { $andfound = false; }
+			}
+			
+			if($andfound == true) {
+				$found = true;
+				$queries_found[$query] = true;
+			}
+			
+		} else {
+			
+			if(preg_match("/".addslashes($query)."/i", $content)) {
+				$found = true;
+				$queries_found[$query] = true;
 			}
 		}
+	}
+	
+	if($found == false) { continue; }
+	
+	// the line has passed conitions, write it
+	if($dooutput) { fwrite($fw, $rawbuffer); }
+	
+	//print_r($buffer);
+	//echo $content;
+	//print_r($queries); print_r($queries_found); exit;
 
-		if(preg_match("/".addslashes($query)."/i",$content) || $incpost == true || $found == true) {
+	foreach($queries as $query) {
+
+		if(isset($queries_found[$query])) {
 
 			if(!isset($datebins[$query][$date])) { $datebins[$query][$date] = array(); }
 			if(!isset($wordlists[$query][$date])) { $wordlists[$query][$date] = array(); }
 			if(!isset($phrases[$query][$date])) { $phrases[$query][$date] = array(); }
-
-			$datebins[$query][$date][] = ($getcomments) ? $buffer:"x";
 			
-			// stream filtered lines to file
-			if($dooutput && count($queries) <= 1) { fwrite($fw, $rawbuffer); }
-
+			$datebins[$query][$date][] = true;
+			
 			if($getcontext) {
 
-				$contextwords = explode(" ", $content);
-				
-				
-				/* code for previous sliding window
-				$words = explode(" ", $content);
-				$contextwords = array();
-
-				for($i = 0; $i < count($words); $i++) {
-					//echo $words[$i];
-					if(preg_match("/".$query."/i",$words[$i])) {
-						$lengthhead = ($i - $windowsize < 0) ? $i:$windowsize;
-						$lengthtail = ($i + $windowsize > count($words)) ? count($words) - $i:$windowsize;
-						$headarray = array_slice($words, $i - $lengthhead,$lengthhead);
-						$tailarray = array_slice($words, $i + 1,$lengthtail);
-						$contextwords = array_merge($contextwords,$headarray,$tailarray);
-					}
+				$tmpcontent = strtolower($content);
+				$tmpcontent = preg_replace("/[^a-z0-9\p{L}\p{N}\/]+/iu"," ", $tmpcontent);			// \p{} is unicode syntax
+		
+				/*
+				// clean up content
+				if($getcontext) {
+					//$content = preg_replace("/[\.\"\'\!\?\(\);,¿:]/", " ", $content); // currently also filters out URLs 
+					//$content = preg_replace("/[\n\r]/", " ", $content);
+					//$content = preg_replace("/\s+/", " ", $content);
+					//$content = preg_replace("/\W+/", " ", $content);
+					$content = preg_replace("/http.+?( |$)/i","", $content);
+					$content = preg_replace("/[^a-z0-9\p{L}]+/iu"," ", $content);
+					$content = trim($content);
+					$content = strtolower($content);
 				}
 				*/
+
+				$contextwords = preg_split('/\s+/', $tmpcontent);
 
 				foreach($contextwords as $word) {
 					
@@ -553,15 +477,12 @@ fclose($fw);
 fclose($fr);
 
 // fill empty dates and create date list
-$start = strtotime($startdate);
-$stop = strtotime($enddate);
+$start = $oldestdate;
+$stop = $newestdate;
 $datelist = array();
 
 //echo $start . " " . $stop;
 foreach($queries as $query) {
-
-	// week = 604800
-	// day = 86400
 
 	for($i = $start; $i < $stop; $i += $seconds) {
 		$date = date($dateformat,$i);
@@ -578,98 +499,120 @@ foreach($queries as $query) {
 }
 
 
-
-
 if($dosummary) {
-	
-	$outlist = "query,count\n";
-	
-	//print_r($datebins);
+
+	$counter = 0;	
+	$outlist = "query / " . $timescale;
 	
 	foreach($datebins as $query => $bin) {
 		
-		$outlist .= $query . ",";
-		
-		$counter = 0;
-		
-		foreach($bin as $days) {
-			$counter += count($days);
+		if($counter == 0) {
+			
+			// write the timescale row
+			foreach($datebins_full as $date => $val) {
+				$outlist .= "," . $date;
+			}
+			$outlist .= ",total\n";
+			
+			// write full lines per timescale
+			$total = 0;
+			$outlist .= "total";
+			foreach($datebins_full as $date => $val) {
+				$outlist .= "," . $val;
+				$total += $val;
+			}
+			$outlist .= ","  . $total . "\n";
+			$counter++;
 		}
 		
-		$outlist .= $counter . "\n";
+		// write query numbers per timescale
+		$total = 0;
+		$outlist .= $query;		
+		foreach($datebins_full as $date => $val) {
+			$outlist .= "," . count($bin[$date]);
+			$total += count($bin[$date]);
+		}
+		$outlist .= "," . $total . "\n";
 		
+		// write query percent per timescale
+		$total = 0;
+		$total_full = 0;
+		$outlist .= $query . " (percent)";
+		foreach($datebins_full as $date => $val) {
+			$outlist .= "," . round((count($bin[$date]) / $val) * 100,2);
+			$total += count($bin[$date]);
+			$total_full += $val;
+		}
+		$outlist .= "," . round(($total / $total_full) * 100,2) . "\n";
 	}
 	
-	file_put_contents($filename_summary, $outlist);
+	file_put_contents($outdir . $filename_summary, $outlist);
 }
 
 
 
 ?>
 
-<div id="if_panel" class="if_structure">
-	
-	<div id="if_panel_downloads" class="if_structure">
+	<div id="if_panel" class="if_structure">
+		
 		<div class="rowTab">
-			<div class="headTab">
-				Files written to disk:
-			</div>
+			<div class="sectionTab"><h2>Results</h2></div>
 		</div>
-				
-		<div class="rowTab">
-			<div id="if_panel_downloads_data" class="fullTab">
-				<?php
-				
-				if($dooutput) {
-					
-					echo 'Filtered file: <a href="'.$filename_out.'" download>'.$filename_out.'</a>'; 
-				}
-					
-				?>
+		
+		<div id="if_panel_downloads" class="if_structure">
+			<div class="rowTab">
+				<div class="sectionTab"><h3>Files written to disk</div>
 			</div>
+					
+			<div class="rowTab">
+				<div id="if_panel_downloads_data" class="fullTab">
+					<?php
+					
+					if($dooutput) {
+						
+						echo 'Filtered file: <a href="./output/'.$filename_out.'" download>'.$filename_out.'</a>'; 
+					}
+						
+					?>
+				</div>
+			</div>
+			
+			<div class="rowTab">
+				<div id="if_panel_downloads_data" class="fullTab">
+					<?php
+					
+					if($dosummary) {
+						
+						echo 'Filtered file: <a href="./output/'.$filename_summary.'" download>'.$filename_summary.'</a>'; 
+					}
+						
+					?>
+				</div>
+			</div>
+			
 		</div>
 		
 		<div class="rowTab">
-			<div id="if_panel_downloads_data" class="fullTab">
-				<?php
-				
-				if($dosummary) {
-					
-					echo 'Filtered file: <a href="'.$filename_summary.'" download>'.$filename_summary.'</a>'; 
-				}
-					
-				?>
-			</div>
+			<div class="sectionTab"><h3>Number of lines the queries appear in</h3></div>
 		</div>
 		
-	</div>
-	
-	<div class="rowTab">
-		<div class="headTab">
-			Number of lines the queries appear in:
-		</div>
-	</div>
-	
-	<div id="if_panel_linegraph_freq"></div>
-	
-	<div class="rowTab">
-		<div class="headTab">
-			Percentage of lines the queries appear in:
-		</div>
-	</div>
-	
-	<div id="if_panel_linegraph_norm"></div>
-	
-	
-	<div id="if_panel_context" class="if_structure">
-	
+		<div id="if_panel_linegraph_freq" class="if_panel_linegraph"></div>
+		
 		<div class="rowTab">
-			<div class="headTab">
-				Word context:
-			</div>
+			<div class="sectionTab"><h3>Percentage of lines the queries appear in</h3></div>
 		</div>
 		
-		<div id="if_panel_context_data">
+		<div id="if_panel_linegraph_norm" class="if_panel_linegraph"></div>
+		
+		
+		<div id="if_panel_context" class="if_structure">
+		
+			<div class="rowTab">
+				<div class="sectionTab"><h3>Word context</h3></div>
+			</div>
+			
+			<div class="rowTab">
+				<div id="if_panel_context_data">
 <?php
 
 if($getcontext) {
@@ -765,6 +708,8 @@ if($getcontext) {
 }
 
 ?>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>
@@ -802,7 +747,7 @@ if($getcontext) {
 	?>
 
 	var chart = new google.visualization.LineChart(document.getElementById('if_panel_linegraph_freq'));
-	chart.draw(data, {width:1200, height:360, fontSize:9, hAxis:{slantedTextAngle:90, slantedText:true},  lineWidth:1, chartArea:{left:50,top:10,width:1050,height:300}});
+	chart.draw(data, {width:1220, height:360, fontSize:9, hAxis:{slantedTextAngle:90, slantedText:true},  lineWidth:1, chartArea:{left:50,top:10,width:1080,height:300}});
 
 
 	var data2 = new google.visualization.DataTable();
@@ -828,9 +773,7 @@ if($getcontext) {
 	?>
 
 	var chart2 = new google.visualization.AreaChart(document.getElementById('if_panel_linegraph_norm'));
-	chart2.draw(data2, {width:1200, height:210, fontSize:9, hAxis:{slantedTextAngle:90, slantedText:true}, lineWidth:1, chartArea:{left:50,top:10,width:1050,height:150}});
-
-	//vAxis:{ticks: [10,20,30,40,50,60,70,80,90,100], maxValue:100},
+	chart2.draw(data2, {width:1220, height:210, fontSize:9, hAxis:{slantedTextAngle:90, slantedText:true}, lineWidth:1, chartArea:{left:50,top:10,width:1000,height:150}});
 
 </script>
 
