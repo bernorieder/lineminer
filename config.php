@@ -1,11 +1,19 @@
 <?php
 
-// ----- configuration variables -----
-$datadir = "./data";
-$outdir = "./output";
-$stopwordsdir = "./stopwords/";
+// todo: put cwd() into the dir defintions
+// is the $httproot really necessary?
+// check stopword lists
+// build a quick data error detection
+
+// ----- analysis variables -----
 $windowsize = 3;
-$httproot = "https://tools.digitalmethods.net/netvizz/facebook/research/lineminer/";
+
+
+// ----- directory variables -----
+$datadir = getcwd() . "/data/";
+$outdir = getcwd() . "/output/";
+$stopwordsdir = getcwd() . "/stopwords/";
+
 
 // ----- server stuff -----
 ignore_user_abort(false);
