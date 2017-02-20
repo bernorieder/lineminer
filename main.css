@@ -1,4 +1,4 @@
-body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; background:#000; margin:0px; padding:0px; }
+body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; background:#000; margin:0px; padding:0px; background-color:#fff; }
 
 h1 { margin:0px 0px 15px 0px; font-size:24px; font-weight:100; letter-spacing:2px; color:#fff; background-color:#1D2731; padding:50px 0px 3px 8px; }
 h2 { margin:10px 0px 3px 0px; font-size:16px; letter-spacing:1px; color:#fff; background-color:#0B3C5D; padding:3px 0px 3px 8px }
@@ -9,7 +9,7 @@ a { text-decoration:none; color:#fff; background-color:#D9B310; padding:0px 3px 
 table,tr,td,th { font-family:Arial, Helvetica, sans-serif; font-size:9px; border-collapse:collapse; }
 td { padding:3px; }
 
-table.lines,tr.lines,td.lines,th.lines { font-size:11px; vertical-align:top; border:1px solid black; }
+table.lines,tr.lines,td.lines,th.lines { font-size:11px; vertical-align:top; border:1px solid black; padding:1px 3px 1px 3px; }
 
 table.wordlist,tr.wordlist,td.wordlist,th.wordlist { font-size:11px; vertical-align:top; border:1px solid black; }
 .wordlist_title { font-size:12px; font-weight:bold; }
