@@ -15,34 +15,41 @@ while(($buffer = fgets($fr)) !== false) { break; }
 $buffer = str_getcsv(preg_replace("/\xEF\xBB\xBF/","",$buffer),$delimiter);
 
 // create response
-$reply = array("type" => "unknown","columns" => $buffer);
+$reply = array("type" => "Unknown","columns" => $buffer);
 
-if(preg_match("/authorChannelId/",$buffer)) {
+if($buffer[6] == "authorChannelId") {
 		$reply["type"] = "YouTube Data Tools comment";
 		$reply["col_date"] =$buffer[3];
 		$reply["col_text"] = $buffer[5];
 		$reply["col_score"] = $buffer[2];
 		$reply["col_text_post"] = false; }
 		
-if(preg_match("/comment_like_count/",$buffer)) {
+if($buffer[6] == "comment_like_count") {
 		$reply["type"] = "Netvizz top comments";
 		$reply["col_date"] = $buffer[3];
 		$reply["col_text"] = $buffer[5];
 		$reply["col_score"] = $buffer[2];
 		$reply["col_text_post"] = $buffer[1]; }
 		
-if(preg_match("/position/",$buffer)) {
+if($buffer[0] == "position") {
 		$reply["type"] = "Netvizz comments";
 		$reply["col_date"] = $buffer[3];
-		$reply["col_text"] = $buffer[5];
+		$reply["col_text"] = $buffer[4];
 		$reply["col_score"] = $buffer[2]; 
 		$reply["col_text_post"] = $buffer[3]; }
 		
-if(preg_match("/in_reply_to_status_id/",$buffer)) {
+if($buffer[5] == "imageurl") {
+		$reply["type"] = "Netvizz image file";
+		$reply["col_date"] = $buffer[2];
+		$reply["col_text"] = $buffer[1];
+		$reply["col_score"] = $buffer[2]; 
+		$reply["col_text_post"] = false; }
+		
+if($buffer[14] == "in_reply_to_status_id") {
 		$reply["type"] = "DMI-TCAT tweet export";
 		$reply["col_date"] = $buffer[3];
 		$reply["col_text"] = $buffer[5];
-		$reply["col_score"] = $buffer[2];
+		$reply["col_score"] = $buffer[6];
 		$reply["col_text_post"] = false; }
 		
 if($buffer[5] == "post_ups") {
