@@ -647,7 +647,7 @@ if($getcontext) {
 				}
 				
 				
-				echo '<td class="wordlist"><a href="getcomments.php?date='.$date.'&timescale='.$timescale.'&datafile='.$filename.'&query='.$query.'&colloc_date='.$colloc_date.'&collocs_text='.implode(",",$collocs_text).'&collocs_score='.implode(",",$collocs_tmp).'" target="_blank">lines</a></td>';
+				echo '<td class="wordlist"><a href="getcomments.php?date='.$date.'&timescale='.$timescale.'&datafile='.$datafile.'&query='.$query.'&colloc_date='.$colloc_date.'&collocs_text='.implode(",",$collocs_text).'&collocs_score='.implode(",",$collocs_tmp).'" target="_blank">lines</a></td>';
 			} else {
 				echo '<td class="wordlist"></td>';
 			}
