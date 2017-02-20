@@ -63,9 +63,9 @@ function sendForm() {
 	var _url = "";
 
 	// basic form parameters
-	_url += "?datafile=" + encodeURIComponent($("select[name='datafile']").val());
+	_url += "?datafile=" + encodeURIComponent($("select[name='datafile'] option:selected").val());
 	_url += "&query=" + encodeURIComponent($("input[name='query']").val());
-	_url += "&language=" + encodeURIComponent($("select[name='language']").val());
+	_url += "&language=" + encodeURIComponent($("select[name='language'] option:selected").val());
 	_url += "&startdate=" + $("input[name='startdate']").val();
 	_url += "&enddate=" + $("input[name='enddate']").val();
 	_url += "&timescale=" + $("input[name='timescale']:checked").val();
@@ -98,18 +98,28 @@ function sendForm() {
 function loadFile(_file) {
 	
 	// reset column lists
+	_interface = new Array;
 	_interface["col_date"] = new Array;
 	_interface["col_text"] = new Array;
 	_interface["col_score"] = new Array;
 	$("[name='col_date']").html("");
 	$("[name='col_text']").html("");
 	$("[name='col_score']").html("");
+	
+	if(_file == "none") {
+		$("#if_filedetected_text").html("");
+		return;
+	}
 
 	$.getJSON("examinefile.php", { file:_file }, function(_reply) {
 		
 		_fileinfo = _reply;
 		
-		$("#if_filedetected_text").html(_fileinfo.type + " file detected. Columns are automatically chosen, but you can modify them below.");
+		if(_fileinfo.type == "Unknown") {
+			$("#if_filedetected_text").html(_fileinfo.type + " file detected. You need to select the appropriate columns below.");
+		} else {
+			$("#if_filedetected_text").html(_fileinfo.type + " file detected. Columns are automatically chosen, but you can modify them below.");
+		}
 		
 		createColselectors();
 	});
