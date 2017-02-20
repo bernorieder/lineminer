@@ -623,7 +623,7 @@ if($getcontext) {
 
 		ksort($wordlist);
 
-		echo '<td class="wordlist_title" colspan="'.count($datelist).'"  <strong>' . preg_replace("/\|/"," OR ",$query) . '</strong></td></tr><tr class="wordlist">';
+		echo '<td class="wordlist_title" colspan="'.count($datelist).'">Query: [<strong>' . preg_replace("/\|/"," OR ",$query) . '</strong>]</td></tr><tr class="wordlist">';
 
 		foreach($datelist as $date) {
 			
@@ -632,12 +632,25 @@ if($getcontext) {
 
 		echo '</tr><tr class="wordlist">';
 		
+		//print_r($wordlist);
+		
 		
 		foreach($datelist as $date) {
-			if($filetype == "facebook" || $filetype == "facebook_topcomments") { $moreoptions = "&minfblikes=" . $minfblikes; }
-			if($filetype == "youtube") { $moreoptions = "&minytlikes=" . $minytlikes; }
-			if($filetype == "twitter") { $moreoptions = "&minfavs=" . $minfavs . "&minretweets=" . $minretweets; }
-			echo '<td class="wordlist"><a href="getcomments.php?date='.$date.'&timescale='.$timescale.'&filename='.$filename.'&query='.$query.'&filetype='.$filetype.$moreoptions.'" target="_blank">lines</a></td>';
+			
+			//echo "\n" . $date . " = " . count($wordlist[$date]) . "\n";
+			
+			$collocs_tmp = array();
+			if(count($wordlist[$date]) > 0) { 
+				
+				foreach($collocs_score as $colloc_score) {
+					$collocs_tmp[] = implode("|", $colloc_score);
+				}
+				
+				
+				echo '<td class="wordlist"><a href="getcomments.php?date='.$date.'&timescale='.$timescale.'&datafile='.$filename.'&query='.$query.'&colloc_date='.$colloc_date.'&collocs_text='.implode(",",$collocs_text).'&collocs_score='.implode(",",$collocs_tmp).'" target="_blank">lines</a></td>';
+			} else {
+				echo '<td class="wordlist"></td>';
+			}
 		}
 
 		echo '</tr><tr class="wordlist">';
@@ -646,7 +659,7 @@ if($getcontext) {
 
 		foreach($datelist as $date) {
 			
-			if(!isset($wordlist[$date])) { 
+			if(count($wordlist[$date]) == 0) { 
 				echo '<td class="wordlist"></td>';
 				continue;
 			}
@@ -676,7 +689,7 @@ if($getcontext) {
 		
 		foreach($datelist as $date) {
 			
-			if(!isset($wordlist[$date])) { 
+			if(count($wordlist[$date]) == 0) { 
 				echo '<td class="wordlist"></td>';
 				continue;	
 			}
