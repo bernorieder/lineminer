@@ -4,34 +4,31 @@
 include "config.php";
 include "functions.php";
 
-?>
-
-<html lang="en">
-<head>
-	<title>lineminer - show lines</title>
-
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-
-	<link rel="stylesheet" type="text/css" href="main.css">
-</head>
-
-<body>
-
-<table class="lines">
-<?php
-
+// ----- parse parameters -----
 $date = $_GET["date"];
 $timescale = $_GET["timescale"];
-$filename = $_GET["filename"];
-$filetype = $_GET["filetype"];
-$query = $_GET["query"];
+$datafile = $_GET["datafile"];
+$query = (isset($_GET["query"])) ? urldecode($_GET["query"]):"";
+$query = preg_replace("/ or /","|",strtolower($_GET["query"]));
 
-$minfblikes = (isset($_GET["minfblikes"])) ? $_GET["minfblikes"]:0;
-$minytlikes = (isset($_GET["minytlikes"])) ? $_GET["minytlikes"]:0;
-$minretweets = (isset($_GET["minretweets"])) ? $_GET["minretweets"]:0;
-$minfavs = (isset($_GET["minfavs"])) ? $_GET["minfavs"]:0;
+$colloc_date = urldecode($_GET["colloc_date"]);
+$collocs_text = explode(",", urldecode($_GET["collocs_text"]));
+$collocs_score_tmp = explode(",", urldecode($_GET["collocs_score"]));
+for($i = 0; $i < count($collocs_score_tmp); $i++) {
+	$tmp = explode("|", $collocs_score_tmp[$i]);
+	$collocs_score[$tmp[0]] = $tmp[1];
+}
 
-print_r($_GET);
+if($timescale == "minute") {
+	$startdate = $date . " 00:00:00";
+	$enddate = $date . " 23:59:59";
+}
+
+if($timescale == "hour") {
+	$startdate = $date . " 00:00:00";
+	$enddate = $date . " 23:59:59";
+}
+
 
 if($timescale == "day") {
 	$startdate = $date . " 00:00:00";
@@ -46,12 +43,42 @@ if($timescale == "week") {
 	$enddate = date('Y-m-d', strtotime($year."W".$week_number."7")) . " 23:59:59";
 }
 
-echo "Tweets from " . $startdate . " to " . $enddate;
+
+?>
+
+<html lang="en">
+<head>
+	<title>lineminer - show lines</title>
+
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+	<link rel="stylesheet" type="text/css" href="main.css">
+</head>
+
+<body>
+	
+<div class="rowTab">
+	<div class="sectionTab"><h3>
+		
+<?php
+
+echo "Lines from " . $startdate . " to " . $enddate . " with query [" . $query . "]";
+
+?>
+
+	</h3></div>
+</div>
+
+<div class="rowTab">
+	<div class="fullTab">
+		<table class="lines">
+
+<?php
 
 //exit;
 
-$separator = (preg_match("/\.tab/",$filename)) ? "\t":",";
-$fr = fopen($filename,'r');
+$delimiter = (preg_match("/\.tab/",$datafile) || preg_match("/\.tsv/",$datafile)) ? "\t":",";
+$fr = fopen($datadir . $datafile,"r");
 $counter = 0;
 
 // ----- main file loop -----
@@ -59,9 +86,10 @@ while(($buffer = fgets($fr)) !== false) {
 
 	echo '<tr class="lines">';
 
-	$buffer = str_getcsv($buffer,$separator,'"');
+	$buffer = str_getcsv($buffer,$delimiter,'"');
 
 	if($counter == 0) {			// jump first line
+		$buffer[0] = preg_replace("/\xEF\xBB\xBF/","",$buffer[0]);
 		echo '<th class="lines">';
 		echo implode('</th><th class="lines">', $buffer);
 		echo '</th></tr>';
@@ -69,35 +97,37 @@ while(($buffer = fgets($fr)) !== false) {
 		continue;
 	}
 	
-
-	// select appropriate colums
-	if($filetype == "facebook") {
-		$unixdate = strtotime($buffer[4]);
-		$content = $buffer[8];
-	} else if($filetype == "youtube") {
-		$unixdate = strtotime($buffer[3]);
-		$content = $buffer[5];	
-	} else if($filetype == "twitter") {
-		$unixdate = strtotime($buffer[2]);
-		$content = $buffer[4];	
-	}
-	
-	//echo strtotime($startdate) . " " . strtotime($enddate) . " " . $unixdate . "<br />";
-	
 	// time filter
+	$unixdate = strtotime($buffer[$colloc_date]);
 	if($unixdate < strtotime($startdate) || $unixdate > strtotime($enddate)) { continue; }
-	if(!preg_match("/".$query."/i",$content) && $query != "all") { continue; }
 	
-	// filter lines below specified threshold
-	if($filetype == "facebook") {
-		if($buffer[10] < $minfblikes) { continue; }
-	} else if($filetype == "youtube") {
-		if($buffer[2] < $minytlikes) { continue; }
-	} else if($filetype == "twitter") {
-		if($buffer[10] < $minretweets || $buffer[11] < $minfavs) { continue; }
+	// content filter
+	$content = "";
+	foreach($collocs_text as $colloc_text) {
+		$content .= $buffer[$colloc_text] . " ";
 	}
-
 	
+	// score filter
+	foreach($collocs_score as $col => $score) {
+		if(intval($buffer[$col]) < intval($score)) { continue 2; }
+	}
+	
+	// content filter
+	if(preg_match("/ and /i",$query)) {
+				
+		$parts = explode(" and ", $query);
+		foreach($parts as $part) {
+			if(!preg_match("/".addslashes($part)."/i", $content)) { continue 2; }
+		}
+				
+	} else {
+		
+		if(!preg_match("/".addslashes($query)."/i",$content) && $query != "all") { continue; }
+	}
+	
+	
+		
+		
 	echo '<td class="lines">';
 	echo implode('</td><td class="lines">', $buffer);
 	echo '</td>';
@@ -107,7 +137,9 @@ while(($buffer = fgets($fr)) !== false) {
 	
 ?>
 
-</table>
+		</table>
+	</div>
+</div>
 
 </body>
 </html>
