@@ -36,3 +36,28 @@ table.wordlist,tr.wordlist,td.wordlist,th.wordlist { font-size:11px; vertical-al
 .fullTab { display:table-cell; vertical-align:middle; padding:0px 3px 0px 10px; width:1240px; }
 .sectionTab { display:table-cell; vertical-align:middle; padding:0px; width:1240px; }
 .comTab { display:table-cell; vertical-align:middle; padding:0px 3px 0px 3px; font-style:italic; color:#333; }
+
+
+.node circle {
+	fill: #999;
+}
+
+.node text {
+	font-family: sans-serif;
+	background-color: #ddd;
+}
+
+.node--internal circle {
+	fill: #555;
+}
+
+.node--internal text {
+	text-shadow: 0 2px 0 #fff, 0 -2px 0 #fff, 2px 0 0 #fff, -2px 0 0 #fff;
+}
+
+.link {
+	fill: none;
+	stroke: #999;
+	/* stroke-opacity: 0.4; */
+	stroke-width: 1px;
+}
