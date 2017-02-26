@@ -491,7 +491,7 @@ while(($rawbuffer = fgets($fr)) !== false) {
 					
 						$contextwords = preg_split('/\s+/', $tmpcontent);
 						
-						$toget = (count($contextwords) > 10) ? 10:count($contextwords);
+						$toget = (count($contextwords) > 20) ? 20:count($contextwords);
 								
 						if($toget > 0) {
 							$phrases[$query][] = array_merge(array($query),array_splice($contextwords,0,$toget));
