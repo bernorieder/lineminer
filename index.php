@@ -339,7 +339,7 @@ $extension = substr($filename, strlen($filename) - 3);
 $delimiter = ($extension == "tab" || $extension == "tsv") ? "\t":",";
 
 
-$fr = fopen($outdir . $datafile,"r");
+$fr = fopen($datadir . $datafile,"r");
 if($dooutput) { $fw = fopen($outdir . $filename_out,"w"); }
 $counter = 0;
 $oldestdate = strtotime($enddate);
@@ -862,7 +862,7 @@ if($dowordtree) {
 		$csv .= $id . "," . $value . "\n";
 	}
 	
-	file_put_contents($datadir . "lines.csv",substr($csv,0,strlen($csv)-1));	
+	file_put_contents($outdir . "lines.csv",substr($csv,0,strlen($csv)-1));	
 }
 
 function maketree($parent) {
