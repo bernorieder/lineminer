@@ -52,6 +52,7 @@ if ($dh = opendir($stopwordsdir)) {
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
 	<script type="text/javascript" src="./common/jquery-3.1.1.min.js"></script>
+	<script type="text/javascript" src="./common/d3.v4.min.js"></script>
 	<script type="text/javascript" src="./common/functions.js"></script>
 
 	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
@@ -220,6 +221,10 @@ if ($dh = opendir($stopwordsdir)) {
 		</div>
 		
 		<div class="rowTab">
+			<div class="fullTab"><input type="checkbox" name="dowordtree" /> show word tree (experimental, use with a single query only; works well with queries like [we are]; can get very big for very common words;)</div>
+		</div>
+		
+		<div class="rowTab">
 			<div class="fullTab"><input type="checkbox" name="dosummary" /> create a summary file for the query</div>
 		</div>
 		
@@ -281,6 +286,7 @@ $stopwords = getstopwords($language);
 
 $showfull = ($_GET["showfull"] == "true") ? true:false;
 $getcontext = ($_GET["getcontext"] == "true") ? true:false;
+$dowordtree = ($_GET["dowordtree"] == "true") ? true:false;
 $dooutput = ($_GET["dooutput"] == "true") ? true:false;
 $dosummary = ($_GET["dosummary"] == "true") ? true:false;
 
@@ -432,15 +438,15 @@ while(($rawbuffer = fgets($fr)) !== false) {
 
 			if(!isset($datebins[$query][$date])) { $datebins[$query][$date] = array(); }
 			if(!isset($wordlists[$query][$date])) { $wordlists[$query][$date] = array(); }
-			if(!isset($phrases[$query][$date])) { $phrases[$query][$date] = array(); }
+			//if(!isset($phrases[$query][$date])) { $phrases[$query][$date] = array(); }
 			
 			$datebins[$query][$date][] = true;
 			
-			if($getcontext) {
-
+			if($getcontext || $dowordtree) {
+				
 				$tmpcontent = strtolower($content);
-				$tmpcontent = preg_replace("/[^a-z0-9\p{L}\p{N}\/]+/iu"," ", $tmpcontent);			// \p{} is unicode syntax
-		
+				$tmpcontent = preg_replace("/[^a-z0-9\p{L}\p{N}\/']+/iu"," ", $tmpcontent);			// \p{} is unicode syntax
+				
 				/*
 				// clean up content
 				if($getcontext) {
@@ -455,18 +461,42 @@ while(($rawbuffer = fgets($fr)) !== false) {
 				}
 				*/
 
-				$contextwords = preg_split('/\s+/', $tmpcontent);
+				if($getcontext) {
 
-				foreach($contextwords as $word) {
+					$contextwords = preg_split('/\s+/', $tmpcontent);
 					
-					if(isset($stopwords[$word]) || strlen($word) < 3) { continue; }
-
-					if(!isset($wordlists[$query][$date][$word])) {
-						$wordlists[$query][$date][$word] = 0;
-						if(!isset($wordlist_full[$word])) { $wordlist_full[$word] = 0;}			// this is for tf*idf
-						$wordlist_full[$word]++;
+					for($i = 0; $i < count($contextwords); $i++) {
+						
+						$word = $contextwords[$i];
+						
+						if(isset($stopwords[$word]) || strlen($word) < 3) { continue; }
+	
+						if(!isset($wordlists[$query][$date][$word])) {
+							$wordlists[$query][$date][$word] = 0;
+							if(!isset($wordlist_full[$word])) { $wordlist_full[$word] = 0;}			// this is for tf*idf
+							$wordlist_full[$word]++;
+						}
+						$wordlists[$query][$date][$word]++;
 					}
-					$wordlists[$query][$date][$word]++;
+				}
+			
+					
+				if($dowordtree) {
+				
+					$tmpcontent = trim(substr($tmpcontent, strpos($tmpcontent, $query) + strlen($query)));
+					
+					//echo $tmpcontent . "\n";
+					
+					if(strlen($tmpcontent) > 0) {
+					
+						$contextwords = preg_split('/\s+/', $tmpcontent);
+						
+						$toget = (count($contextwords) > 10) ? 10:count($contextwords);
+								
+						if($toget > 0) {
+							$phrases[$query][] = array_merge(array($query),array_splice($contextwords,0,$toget));
+						}
+					}
 				}
 			}
 		}
@@ -548,8 +578,6 @@ if($dosummary) {
 	
 	file_put_contents($outdir . $filename_summary, $outlist);
 }
-
-
 
 ?>
 
@@ -706,7 +734,7 @@ if($getcontext) {
 			echo '<td class="wordlist"><em>tf-idf:</em><br />';
 			$counter = 0;
 			foreach($speclist as $word => $freq) {
-				if($counter == 15) {break;}
+				if($counter == 15) { break; }
 				$counter++;
 				echo $word . "&nbsp;(" . $speclist[$word] . "," . $wordlist[$date][$word] . "," . $wordlist_full[$word] . ")<br />";
 			}
@@ -724,8 +752,202 @@ if($getcontext) {
 				</div>
 			</div>
 		</div>
+		
+		
+		<div id="if_panel_wordtree" class="if_structure">
+		
+			<div class="rowTab">
+				<div class="sectionTab"><h3>Word Tree</h3></div>
+			</div>
+			
+			<div class="rowTab">
+				<div id="if_panel_wordtree_data">
+					<svg width="1240" height="<?php echo count($phrases[$queries[0]]) * 12 ?>"></svg>
+				</div>
+			</div>
+		</div>
 	</div>
 </div>
+
+
+<?php
+
+
+if($dowordtree) {
+	
+	$lines = array();
+	$tree = array();
+
+	//print_r($phrases);
+
+	foreach($queries as $query) {
+		
+		foreach($phrases[$query] as $phrase) {
+			 
+			if(!isset($lines[$phrase[0]])) { $lines[$phrase[0]] = 0; }
+			$lines[$phrase[0]]++;
+			
+			
+			if(isset($phrase[1])) {
+				if(!isset($lines[$phrase[0] . "." . $phrase[1]])) { $lines[$phrase[0] . "." . $phrase[1]] = 0; }
+				$lines[$phrase[0] . "." . $phrase[1]]++;
+				
+				if(isset($phrase[2])) {
+					if(!isset($lines[$phrase[0] . "." . $phrase[1] . "." . $phrase[2]])) { $lines[$phrase[0] . "." . $phrase[1] . "." . $phrase[2]]  = 0; }
+					$lines[$phrase[0] . "." . $phrase[1] . "." . $phrase[2]]++;
+					
+					if(isset($phrase[3])) {
+						if(!isset($lines[$phrase[0] . "." . $phrase[1] . "." . $phrase[2] . "." . implode(" ", array_slice($phrase, 3))])) { 
+							$lines[$phrase[0] . "." . $phrase[1] . "." . $phrase[2] . "." . implode(" ", array_slice($phrase, 3))] == 0;
+						}
+						$lines[$phrase[0] . "." . $phrase[1] . "." . $phrase[2] . "." . implode(" ", array_slice($phrase, 3))]++;
+					}
+					
+				}
+			}
+		}
+	}
+	
+	//ksort($lines);
+	//print_r($lines);
+	$replacements = array();
+	
+	
+	foreach($lines as $line => $freq) {
+		
+		//echo $line . " " . $freq . "\n";
+		
+		$toreplace = "";
+		foreach($lines as $line2 => $freq2) {
+			
+			if(preg_match("/".addslashes($line)."\./", $line2)) {
+										
+				if($freq == $freq2)  {
+					
+					//echo "ln2:" . $line2 . " " . $freq2 . "\n";
+					
+					unset($lines[$line2]);
+					$substr = substr($line2,strlen($line));
+					if(strlen($substr) > strlen($toreplace)) { $toreplace = $substr; }
+				}
+			}
+		}
+		
+		//echo "tr: " . $toreplace . "\n\n"; 
+		
+		if($toreplace != "") {
+			$replacements[$line.$toreplace] = $line.preg_replace("/\./", " ", $toreplace);
+			$lines[$replacements[$line.$toreplace]] = $freq;
+			unset($lines[$line]);
+		}			
+	}
+	
+	// apply the replacements
+	$newlines = array();
+	foreach($lines as $line => $freq) {
+		foreach($replacements as $from => $to) {
+			if(preg_match("/^".addslashes($from)."/", $line)) {
+				$line = preg_replace("/^".addslashes($from)."/", $to, $line);
+			}
+		}
+				
+		$newlines[$line] = $freq;
+	}
+
+	//print_r($newlines);
+
+	$csv = "id,value\n";
+
+	foreach($newlines as $id => $value) {
+		$csv .= $id . "," . $value . "\n";
+	}
+	
+	file_put_contents($datadir . "lines.csv",substr($csv,0,strlen($csv)-1));	
+}
+
+function maketree($parent) {
+	
+}
+
+
+?>
+
+<script>
+
+var _nodesep = 200;
+
+var svg = d3.select("svg"),
+	width = +svg.attr("width"),
+	height = +svg.attr("height"),
+	g = svg.append("g").attr("transform", "translate(40,0)");
+
+var tree = d3.cluster()
+	.size([height, width - 160]);
+
+var stratify = d3.stratify()
+	.parentId(function(d) { return d.id.substring(0, d.id.lastIndexOf(".")); });
+
+d3.csv("./output/lines.csv", function(error, data) {
+	if (error) throw error;
+  
+	//console.log(data);
+
+	var _smallest = 10000000000;
+	var _biggest = 0;
+
+	for(var _el in data) {
+		data[_el].value = parseInt(data[_el].value);
+		//console.log(data[_el]);
+		if(data[_el].value > _biggest) { _biggest = data[_el].value; }
+		if(data[_el].value < _smallest) { _smallest = data[_el].value; }
+	}
+
+	for(var _el in data) {
+		if(_el != "columns") {
+			data[_el].size =  10 + Math.round((data[_el].value - _smallest) / _biggest * 10);
+			//console.log(data[_el]);
+			//console.log(data[_el].value + " " + data[_el].size);
+		}
+	}
+
+	var root = stratify(data)
+		.sort(function(a, b) { return (a.height - b.height) || a.id.localeCompare(b.id); });
+
+	//console.log(root);
+
+	tree(root);
+
+	var link = g.selectAll(".link")
+		.data(root.descendants().slice(1))
+		.enter().append("path")
+		.attr("class", "link")
+		.attr("d", function(d) {
+			return "M" + (d.depth * _nodesep) + "," + d.x
+			+ "C" + ((d.parent.depth * _nodesep) + (_nodesep / 2)) + "," + d.x
+			+ " " + ((d.parent.depth * _nodesep) + (_nodesep / 2)) + "," + d.parent.x
+			+ " " + (d.parent.depth * _nodesep) + "," + d.parent.x;
+		});
+
+	var node = g.selectAll(".node")
+		.data(root.descendants())
+		.enter().append("g")
+		.attr("class", function(d) { return "node" + (d.children ? " node--internal" : " node--leaf"); })
+		//.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
+		.attr("transform", function(d) { return "translate(" + (d.depth * _nodesep) + "," + d.x + ")"; })
+
+	//node.append("circle")
+		//.attr("r", 5);
+
+	node.append("text")
+		.attr("dy", function(d) { return (d.data.size / 3); })			// text y anchor
+		//.attr("x", function(d) { return (typeof(d.children) == "object" && d.depth > 0) ? -8 : 8; })
+		.attr("x", function(d) { return (d.depth > 0) ? 5 : -5; })
+		.style("text-anchor", function(d) { return (typeof(d.children) == "object" && d.depth > 0) ? "middle":"start"; })
+		.style("font-size", function(d) { return d.data.size + "px"; })
+		.text(function(d) { return d.id.substring(d.id.lastIndexOf(".") + 1) + " (" + d.data.value + ")"; });
+});
+
+</script>
 
 
 <script type="text/javascript">
