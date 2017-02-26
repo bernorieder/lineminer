@@ -339,7 +339,7 @@ $extension = substr($filename, strlen($filename) - 3);
 $delimiter = ($extension == "tab" || $extension == "tsv") ? "\t":",";
 
 
-$fr = fopen($datadir . $datafile,"r");
+$fr = fopen($outdir . $datafile,"r");
 if($dooutput) { $fw = fopen($outdir . $filename_out,"w"); }
 $counter = 0;
 $oldestdate = strtotime($enddate);
