@@ -43,6 +43,10 @@ function onloadTodo() {
 			$("input:checkbox[name='getcontext']").attr('checked', true);
 			$("#if_panel_context").show();
 		};
+		if(_params.dowordtree == "true") {
+			$("input:checkbox[name='dowordtree']").attr('checked', true);
+			$("#if_panel_wordtree").show();
+		};
 		if(_params.dosummary == "true") {
 			$("input:checkbox[name='dosummary']").attr('checked', true);
 			$("#if_panel_downloads").show();};
@@ -71,6 +75,7 @@ function sendForm() {
 	_url += "&timescale=" + $("input[name='timescale']:checked").val();
 	_url += "&showfull=" + $("input[name='showfull']").is(':checked');
 	_url += "&getcontext=" + $("input[name='getcontext']").is(':checked');
+	_url += "&dowordtree=" + $("input[name='dowordtree']").is(':checked');
 	_url += "&dosummary=" + $("input[name='dosummary']").is(':checked');
 	_url += "&dooutput=" + $("input[name='dooutput']").is(':checked');
 
