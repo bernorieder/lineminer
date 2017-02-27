@@ -1,18 +1,17 @@
 <?php
 
-// tool description
-// Some stop word lists: http://www.semantikoz.com/blog/free-stop-word-lists-in-23-languages/
-// and
-// tab outputs
-// language cleaning
+// LineMiner is made by Bernhard Rieder, http://labs.polsys.net
+// Documentation https://github.com/bernorieder/lineminer/wiki
 
 
 // ----- link external files -----
+
 include "config.php";
 include "./common/functions.php";
 
 
 // ----- check for and load list of data files -----
+
 $filenames = array();
 if ($dh = opendir($datadir)) {
 	while (($file = readdir($dh)) !== false) {
@@ -28,6 +27,7 @@ asort($filenames);
 
 
 // ----- check for and load list of stopword files -----
+
 $stopfiles = array();
 if ($dh = opendir($stopwordsdir)) {
 	while (($file = readdir($dh)) !== false) {
@@ -80,8 +80,11 @@ if ($dh = opendir($stopwordsdir)) {
 	<div id="if_description" class="if_structure">
 		<div class="rowTab">
 			<div class="fullTab">
-				This tool allows for quick text searching through CSV/TSV files where each line is a timestamped unit of text.
-				Source code <a href="https://github.com/bernorieder/lineminer" target="_blank">available on github.</a>	
+				This tool allows for (relatively) fast text searching through large CSV/TSV files where each line is a timestamped unit of text. The main search feature counts the number of lines a queries - or queries - appear in.
+				The tool adds a number of features for the exploration of query contexts.
+				<br /><br />
+				Source code is <a href="https://github.com/bernorieder/lineminer" target="_blank">available on github</a> and there is also a <a href="https://github.com/bernorieder/lineminer/wiki">documentation</a>.
+				Written by <a href="http://labs.polsys.net" target="_blank">Bernhard Rieder</a>, with the support of <a href="http://www.uab.cat" target="_blank">Universitat Autònoma de Barcelona</a>.
 			</div>
 		</div>
 	</div>
@@ -97,8 +100,8 @@ if ($dh = opendir($stopwordsdir)) {
 		
 		<div class="rowTab">
 			<div class="fullTab">
-				This tool works on files put into a data directory on the machine it runs. Since it is designed to run on very big files,
-				there is no upload function - talk to your administrator for how to add files.
+				This tool works on files read from a data directory on the machine it runs. Since it is designed to run on (very) big files,
+				there is currently no upload function - talk to your administrator for how to add files.
 			</div>
 		</div>
 		
@@ -221,7 +224,7 @@ if ($dh = opendir($stopwordsdir)) {
 		</div>
 		
 		<div class="rowTab">
-			<div class="fullTab"><input type="checkbox" name="dowordtree" /> show word tree (experimental, use with a single query only; works well with queries like [we are]; can get very big for very common words;)</div>
+			<div class="fullTab"><input type="checkbox" name="dowordtree" /> show word tree (experimental, use with a single query only; works well with queries like [we are]; can get very big for very common words; start with a small query; )</div>
 		</div>
 		
 		<div class="rowTab">
@@ -244,13 +247,17 @@ if ($dh = opendir($stopwordsdir)) {
 
 <?php
 
-// if there's no file, exit
+
+// ----- if there's no file, not point to continue -----
+
 if(!isset($_GET["datafile"])) {
 	echo '</body></html>';
 	exit;
 }  
 
+
 // ----- base variables -----
+
 $datebins = array();
 $datebins_full = array();
 $wordlists = array();
@@ -259,6 +266,7 @@ $phrases = array();
 
 
 // ----- get GET parameters and do some parsing -----
+
 $query = (isset($_GET["query"])) ? urldecode($_GET["query"]):"";
 $query = preg_replace("/ or /","|",strtolower($_GET["query"]));
 $queries = explode(",",$query);
@@ -290,6 +298,9 @@ $dowordtree = ($_GET["dowordtree"] == "true") ? true:false;
 $dooutput = ($_GET["dooutput"] == "true") ? true:false;
 $dosummary = ($_GET["dosummary"] == "true") ? true:false;
 
+
+// ----- date calculations -----
+
 $_GET["startdate"] = ($_GET["startdate"] != "") ? $_GET["startdate"]:"1971-01-01";
 if(preg_match("/ [0-9]{2}:[0-9]{2}:[0-9]{2}$/", $_GET["startdate"])) {
 	$startdate = $_GET["startdate"];
@@ -308,10 +319,9 @@ if(preg_match("/ [0-9]{2}:[0-9]{2}:[0-9]{2}$/", $_GET["enddate"])) {
 	$enddate .= $_GET["enddate"] . " 23:59:59";
 }
 
-//echo $startdate . " " . $enddate; exit;
 
+// ----- timescale calculations -----
 
-// ----- make calculations for timescale -----
 switch ($timescale) {
 	case "minute":
 		$dateformat = "m-d H-i";
@@ -345,9 +355,11 @@ $counter = 0;
 $oldestdate = strtotime($enddate);
 $newestdate = strtotime($startdate);
 
-//exit;
 
+// --------------------------
 // ----- main line loop -----
+// --------------------------
+
 while(($rawbuffer = fgets($fr)) !== false) {
 
 	if($counter == 0) {			// first line is different
@@ -865,11 +877,6 @@ if($dowordtree) {
 	file_put_contents($outdir . "lines.csv",substr($csv,0,strlen($csv)-1));	
 }
 
-function maketree($parent) {
-	
-}
-
-
 ?>
 
 <script>
@@ -890,14 +897,13 @@ var stratify = d3.stratify()
 d3.csv("./output/lines.csv", function(error, data) {
 	if (error) throw error;
   
-	//console.log(data);
 
+	// do some precalculations
 	var _smallest = 10000000000;
 	var _biggest = 0;
 
 	for(var _el in data) {
 		data[_el].value = parseInt(data[_el].value);
-		//console.log(data[_el]);
 		if(data[_el].value > _biggest) { _biggest = data[_el].value; }
 		if(data[_el].value < _smallest) { _smallest = data[_el].value; }
 	}
@@ -905,15 +911,12 @@ d3.csv("./output/lines.csv", function(error, data) {
 	for(var _el in data) {
 		if(_el != "columns") {
 			data[_el].size =  10 + Math.round((data[_el].value - _smallest) / _biggest * 10);
-			//console.log(data[_el]);
-			//console.log(data[_el].value + " " + data[_el].size);
 		}
 	}
 
+	// create a word tree, based on the standard d3 tree implementation
 	var root = stratify(data)
 		.sort(function(a, b) { return (a.height - b.height) || a.id.localeCompare(b.id); });
-
-	//console.log(root);
 
 	tree(root);
 
@@ -932,7 +935,6 @@ d3.csv("./output/lines.csv", function(error, data) {
 		.data(root.descendants())
 		.enter().append("g")
 		.attr("class", function(d) { return "node" + (d.children ? " node--internal" : " node--leaf"); })
-		//.attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
 		.attr("transform", function(d) { return "translate(" + (d.depth * _nodesep) + "," + d.x + ")"; })
 
 	//node.append("circle")
@@ -940,7 +942,6 @@ d3.csv("./output/lines.csv", function(error, data) {
 
 	node.append("text")
 		.attr("dy", function(d) { return (d.data.size / 3); })			// text y anchor
-		//.attr("x", function(d) { return (typeof(d.children) == "object" && d.depth > 0) ? -8 : 8; })
 		.attr("x", function(d) { return (d.depth > 0) ? 5 : -5; })
 		.style("text-anchor", function(d) { return (typeof(d.children) == "object" && d.depth > 0) ? "middle":"start"; })
 		.style("font-size", function(d) { return d.data.size + "px"; })
@@ -1008,7 +1009,7 @@ d3.csv("./output/lines.csv", function(error, data) {
 	?>
 
 	var chart2 = new google.visualization.AreaChart(document.getElementById('if_panel_linegraph_norm'));
-	chart2.draw(data2, {width:1220, height:210, fontSize:9, hAxis:{slantedTextAngle:90, slantedText:true}, lineWidth:1, chartArea:{left:50,top:10,width:1000,height:150}});
+	chart2.draw(data2, {width:1220, height:210, fontSize:9, hAxis:{slantedTextAngle:90, slantedText:true}, lineWidth:1, chartArea:{left:50,top:10,width:1080,height:150}});
 
 </script>
 
