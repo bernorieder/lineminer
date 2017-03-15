@@ -1,10 +1,13 @@
-body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; background:#000; margin:0px; padding:0px; background-color:#fff; }
-
-h1 { margin:0px 0px 15px 0px; font-size:24px; font-weight:100; letter-spacing:2px; color:#fff; background-color:#1D2731; padding:50px 0px 3px 8px; }
-h2 { margin:10px 0px 3px 0px; font-size:16px; letter-spacing:1px; color:#fff; background-color:#0B3C5D; padding:3px 0px 3px 8px }
-h3 { margin:5px 8px 3px 8px; font-size:14px; letter-spacing:1px; color:#328CC1; border-bottom:2px solid #328CC1; padding:3px 0px 3px 2px }
+body { font-family: 'Droid Sans', sans-serif; font-size: 13px; background:#000; margin:0px; padding:0px; background-color:#fff; }
 
 a { text-decoration:none; color:#fff; background-color:#D9B310; padding:0px 3px 0px 3px; }
+
+h1 { font-family: 'Muli', sans-serif; margin:0px 0px 15px 0px; font-size:24px; font-weight:100; letter-spacing:2px; color:#fff; background-color:#1D2731; padding:50px 0px 3px 8px; }
+h2 { font-family: 'Muli', sans-serif; margin:10px 0px 3px 0px; font-size:16px; letter-spacing:1px; color:#fff; background-color:#0B3C5D; padding:3px 0px 3px 8px; }
+h3 { font-family: 'Muli', sans-serif; margin:5px 8px 3px 8px; font-size:14px; letter-spacing:1px; color:#328CC1; border-bottom:2px solid #328CC1; padding:3px 0px 3px 2px; }
+h4 { font-family: 'Muli', sans-serif; margin:12px 0px 5px 0px; font-size:13px; letter-spacing:1px; color:#000; }
+
+p { line-height:18px; margin:8px 0px 8px 0px; }
 
 table,tr,td,th { font-family:Arial, Helvetica, sans-serif; font-size:9px; border-collapse:collapse; }
 td { padding:3px; }
@@ -22,6 +25,8 @@ table.wordlist,tr.wordlist,td.wordlist,th.wordlist { font-size:11px; vertical-al
 #if_parameters_twitter { display:none; }
 #if_parameters_unknown { display:none; }
 
+#if_filedetected_text { font-style:italic; color:#333; }
+
 #if_panel_context { display:none; width:1240px; }
 #if_panel_context_data { overflow:scroll; margin:0px 10px 0px 10px; width:1220px; }
 
@@ -30,12 +35,15 @@ table.wordlist,tr.wordlist,td.wordlist,th.wordlist { font-size:11px; vertical-al
 .if_structure { margin:0px; }
 .if_panel_linegraph { padding:5px 0px 10px 0px; }
 
+.leftHead { float:left; font-family:'Muli',sans-serif; color:#fff; margin:0px 0px 3px 8px; font-size:24px; letter-spacing:2px; }
+.rightHead { float:right; font-family:'Muli',sans-serif; color:#fff; margin:10px 8px 3px 0px; font-size:14px; letter-spacing:1px; }
+
 .rowTab { display:table; padding:7px 0px 7px 0px; }
 .leftTab { display:table-cell; vertical-align:top; padding:0px 3px 0px 10px; width:130px; }
 .rightTab { display:table-cell; vertical-align:middle; padding:0px 3px 0px 3px; }
 .fullTab { display:table-cell; vertical-align:middle; padding:0px 3px 0px 10px; width:1240px; }
+.headTab { display:table-cell; vertical-align:bottom; padding:0px; width:1240px; height:100px; background-color:#1D2731; border-bottom:7px solid #fff; }
 .sectionTab { display:table-cell; vertical-align:middle; padding:0px; width:1240px; }
-.comTab { display:table-cell; vertical-align:middle; padding:0px 3px 0px 3px; font-style:italic; color:#333; }
 
 
 .node circle {
