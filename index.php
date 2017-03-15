@@ -64,6 +64,7 @@ if ($dh = opendir($stopwordsdir)) {
 	</script>
 	
 	<link rel="stylesheet" type="text/css" href="main.css">
+	<link href="https://fonts.googleapis.com/css?family=Droid+Sans|Muli:700" rel="stylesheet">
 </head>
 
 <body onload="onloadTodo();">
@@ -71,8 +72,14 @@ if ($dh = opendir($stopwordsdir)) {
 <div id="fullpage">
 
 	<div id="if_header" class="if_structure">
-		<div class="sectionTab">
-			<h1>LineMiner</h1>
+		<div class="headTab">
+			<div class="leftHead">LineMiner</div>
+			<div class="rightHead">
+				<a href="http://thepoliticsofsystems.net">blog</a>
+				<a href="http://labs.polsys.net">software</a>
+				<a href="http://thepoliticsofsystems.net/papers-and-talks/">research</a>
+				<a href="http://thepoliticsofsystems.net/about/">about</a>
+			</div>
 		</div>
 	</div>
 	
@@ -80,11 +87,12 @@ if ($dh = opendir($stopwordsdir)) {
 	<div id="if_description" class="if_structure">
 		<div class="rowTab">
 			<div class="fullTab">
-				This tool allows for (relatively) fast text searching through large CSV/TSV files where each line is a timestamped unit of text. The main search feature counts the number of lines a queries - or queries - appear in.
-				The tool adds a number of features for the exploration of query contexts.
-				<br /><br />
-				Source code is <a href="https://github.com/bernorieder/lineminer" target="_blank">available on github</a> and there is also a <a href="https://github.com/bernorieder/lineminer/wiki">documentation</a>.
+				<p>This tool preovides (reasonably) fast text searching through large CSV/TSV files where each line is a timestamped unit of text. The main search feature counts the number of lines a queries - or queries - appear in.
+				The tool adds a number of features for the exploration of query contexts.</p>
+				
+				<p>Source code is <a href="https://github.com/bernorieder/lineminer" target="_blank">available on github</a> and there is also a <a href="https://github.com/bernorieder/lineminer/wiki">documentation</a>.
 				Written by <a href="http://labs.polsys.net" target="_blank">Bernhard Rieder</a>, with the support of <a href="http://www.uab.cat" target="_blank">Universitat Autònoma de Barcelona</a>.
+				</p>
 			</div>
 		</div>
 	</div>
@@ -100,8 +108,8 @@ if ($dh = opendir($stopwordsdir)) {
 		
 		<div class="rowTab">
 			<div class="fullTab">
-				This tool works on files read from a data directory on the machine it runs. Since it is designed to run on (very) big files,
-				there is currently no upload function - talk to your administrator for how to add files.
+				<p>This tool works on files read from a data directory on the machine it runs. Since it is designed to run on (very) big files,
+				there is currently no upload function - talk to your administrator for how to add files.</p>
 			</div>
 		</div>
 		
@@ -121,7 +129,7 @@ if ($dh = opendir($stopwordsdir)) {
 		</div>
 		
 		<div class="rowTab">
-			<div class="comTab" id="if_filedetected_text"></div>
+			<div class="fullTab"><p id="if_filedetected_text"></p></div>
 		</div>
 	</div>
 	
