@@ -78,6 +78,7 @@ if ($dh = opendir($stopwordsdir)) {
 				<a href="http://thepoliticsofsystems.net">blog</a>
 				<a href="http://labs.polsys.net">software</a>
 				<a href="http://thepoliticsofsystems.net/papers-and-talks/">research</a>
+				<a href="https://www.digitalmethods.net">DMI</a>
 				<a href="http://thepoliticsofsystems.net/about/">about</a>
 			</div>
 		</div>
@@ -87,7 +88,7 @@ if ($dh = opendir($stopwordsdir)) {
 	<div id="if_description" class="if_structure">
 		<div class="rowTab">
 			<div class="fullTab">
-				<p>This tool preovides (reasonably) fast text searching through large CSV/TSV files where each line is a timestamped unit of text. The main search feature counts the number of lines a queries - or queries - appear in.
+				<p>This tool provides (reasonably) fast text searching through large CSV/TSV files where each line is a timestamped unit of text. The main search feature counts the number of lines a queries - or queries - appear in.
 				The tool adds a number of features for the exploration of query contexts.</p>
 				
 				<p>Source code is <a href="https://github.com/bernorieder/lineminer" target="_blank">available on github</a> and there is also a <a href="https://github.com/bernorieder/lineminer/wiki">documentation</a>.
