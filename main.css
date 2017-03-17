@@ -36,7 +36,7 @@ table.wordlist,tr.wordlist,td.wordlist,th.wordlist { font-size:11px; vertical-al
 .if_panel_linegraph { padding:5px 0px 10px 0px; }
 
 .leftHead { float:left; font-family:'Muli',sans-serif; color:#fff; margin:0px 0px 3px 8px; font-size:24px; letter-spacing:2px; }
-.rightHead { float:right; font-family:'Muli',sans-serif; color:#fff; margin:10px 8px 3px 0px; font-size:14px; letter-spacing:1px; }
+.rightHead { float:right; font-family:'Muli',sans-serif; color:#fff; margin:7px 8px 3px 0px; font-size:14px; letter-spacing:1px; }
 
 .rowTab { display:table; padding:7px 0px 7px 0px; }
 .leftTab { display:table-cell; vertical-align:top; padding:0px 3px 0px 10px; width:130px; }
