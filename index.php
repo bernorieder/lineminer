@@ -847,7 +847,7 @@ if($dowordtree && count($queries) > 0) {
 		$toreplace = "";
 		foreach($lines as $line2 => $freq2) {
 			
-			if(preg_match("/^".addslashes($line)."\./", $line2)) {
+			if(preg_match("/^".preg_quote($line)."\./", $line2)) {
 										
 				if($freq == $freq2)  {
 					
@@ -875,8 +875,8 @@ if($dowordtree && count($queries) > 0) {
 	$newlines = array();
 	foreach($lines as $line => $freq) {
 		foreach($replacements as $from => $to) {
-			if(preg_match("/^".addslashes($from)."/", $line)) {
-				$line = preg_replace("/^".addslashes($from)."/", $to, $line);
+			if(preg_match("/^".preg_quote($from)."/", $line)) {
+				$line = preg_replace("/^".preg_quote($from)."/", $to, $line);
 			}
 		}
 				
