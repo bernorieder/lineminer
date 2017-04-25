@@ -30,6 +30,8 @@ table.wordlist,tr.wordlist,td.wordlist,th.wordlist { font-size:11px; vertical-al
 #if_panel_context { display:none; width:1240px; }
 #if_panel_context_data { overflow:scroll; margin:0px 10px 0px 10px; width:1220px; }
 
+#if_panel_wordtree { display:none; width:1240px; }
+
 #if_panel_downloads { display:none; }
 
 .if_structure { margin:0px; }
