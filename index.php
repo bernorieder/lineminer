@@ -50,13 +50,17 @@ if ($dh = opendir($stopwordsdir)) {
 	<title>LineMiner</title>
 
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	
+	<meta http-equiv="cache-control" content="no-cache"> 
+	<meta http-equiv="expires" content="0"> 
+	<meta http-equiv="pragma" content="no-cache">
 
 	<script type="text/javascript" src="./common/jquery-3.1.1.min.js"></script>
 	<script type="text/javascript" src="./common/d3.v4.min.js"></script>
+	
 	<script type="text/javascript" src="./common/functions.js"></script>
 
 	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
-
 	<script type="text/javascript">
 
 	google.load("visualization", "1", {packages:["corechart"]});
@@ -354,7 +358,7 @@ switch ($timescale) {
 $filename_out = "filtered_" . md5($query) . "_" . $datafile;
 $filename_summary = "summary_" . md5($query) . ".csv";
 
-$extension = substr($filename, strlen($filename) - 3);
+$extension = substr($datafile, strlen($datafile) - 3);
 $delimiter = ($extension == "tab" || $extension == "tsv") ? "\t":",";
 
 
@@ -391,8 +395,7 @@ while(($rawbuffer = fgets($fr)) !== false) {
 	
 	// separate line to work on
 	$buffer = str_getcsv($rawbuffer,$delimiter,'"');
-	
-	
+		
 	// time filter
 	$unixdate = strtotime($buffer[$colloc_date]);
 	if($unixdate < strtotime($startdate) || $unixdate > strtotime($enddate)) { continue; }
@@ -466,7 +469,8 @@ while(($rawbuffer = fgets($fr)) !== false) {
 			if($getcontext || $dowordtree) {
 				
 				$tmpcontent = strtolower($content);
-				$tmpcontent = preg_replace("/[^a-z0-9\p{L}\p{N}\/']+/iu"," ", $tmpcontent);			// \p{} is unicode syntax
+				$tmpcontent = preg_replace("/\s+/iu"," ", $tmpcontent);
+				$tmpcontent = preg_replace("/[^a-z0-9\p{L}\p{N}\/' ]+/iu","_", $tmpcontent);			// \p{} is unicode syntax
 				
 				/*
 				// clean up content
@@ -794,7 +798,7 @@ if($getcontext) {
 <?php
 
 
-if($dowordtree) {
+if($dowordtree && count($queries) > 0) {
 	
 	$lines = array();
 	$tree = array();
@@ -808,16 +812,18 @@ if($dowordtree) {
 			if(!isset($lines[$phrase[0]])) { $lines[$phrase[0]] = 0; }
 			$lines[$phrase[0]]++;
 			
-			
 			if(isset($phrase[1])) {
+				
 				if(!isset($lines[$phrase[0] . "." . $phrase[1]])) { $lines[$phrase[0] . "." . $phrase[1]] = 0; }
 				$lines[$phrase[0] . "." . $phrase[1]]++;
 				
 				if(isset($phrase[2])) {
+					
 					if(!isset($lines[$phrase[0] . "." . $phrase[1] . "." . $phrase[2]])) { $lines[$phrase[0] . "." . $phrase[1] . "." . $phrase[2]]  = 0; }
 					$lines[$phrase[0] . "." . $phrase[1] . "." . $phrase[2]]++;
 					
 					if(isset($phrase[3])) {
+						
 						if(!isset($lines[$phrase[0] . "." . $phrase[1] . "." . $phrase[2] . "." . implode(" ", array_slice($phrase, 3))])) { 
 							$lines[$phrase[0] . "." . $phrase[1] . "." . $phrase[2] . "." . implode(" ", array_slice($phrase, 3))] == 0;
 						}
@@ -841,7 +847,7 @@ if($dowordtree) {
 		$toreplace = "";
 		foreach($lines as $line2 => $freq2) {
 			
-			if(preg_match("/".addslashes($line)."\./", $line2)) {
+			if(preg_match("/^".addslashes($line)."\./", $line2)) {
 										
 				if($freq == $freq2)  {
 					
@@ -862,6 +868,8 @@ if($dowordtree) {
 			unset($lines[$line]);
 		}			
 	}
+	
+	//print_r($replacements);
 	
 	// apply the replacements
 	$newlines = array();
