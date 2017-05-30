@@ -33,8 +33,8 @@ if($buffer[6] == "comment_like_count") {
 		
 if($buffer[0] == "position") {
 		$reply["type"] = "Netvizz comments";
-		$reply["col_date"] = $buffer[3];
-		$reply["col_text"] = $buffer[4];
+		$reply["col_date"] = $buffer[4];
+		$reply["col_text"] = $buffer[8];
 		$reply["col_score"] = $buffer[2]; 
 		$reply["col_text_post"] = $buffer[3]; }
 		
