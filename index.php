@@ -300,8 +300,6 @@ for($i = 0; $i < count($cols_score_tmp); $i++) {
 
 $datafile = urldecode($_GET["datafile"]);
 
-$timescale = (isset($_GET["timescale"])) ? $_GET["timescale"]:"week";
-
 $language = (isset($_GET["language"])) ? urldecode($_GET["language"]):"english";
 $stopwords = getstopwords($language);
 
@@ -313,6 +311,8 @@ $dosummary = ($_GET["dosummary"] == "true") ? true:false;
 
 
 // ----- date calculations -----
+
+$timescale = (isset($_GET["timescale"])) ? $_GET["timescale"]:"week";
 
 $_GET["startdate"] = ($_GET["startdate"] != "") ? $_GET["startdate"]:"1971-01-01";
 if(preg_match("/ [0-9]{2}:[0-9]{2}:[0-9]{2}$/", $_GET["startdate"])) {
