@@ -300,7 +300,7 @@ for($i = 0; $i < count($cols_score_tmp); $i++) {
 
 $datafile = urldecode($_GET["datafile"]);
 
-$timescale = ($_GET["timescale"] == "") ? $_GET["timescale"]:"week";
+$timescale = (isset($_GET["timescale"])) ? $_GET["timescale"]:"week";
 
 $language = (isset($_GET["language"])) ? urldecode($_GET["language"]):"english";
 $stopwords = getstopwords($language);
@@ -898,6 +898,10 @@ if($dowordtree && count($queries) > 0) {
 
 <script>
 
+if(_params.dowordtree == false) {
+	throw "";
+}
+
 var _nodesep = 200;
 
 var svg = d3.select("svg"),
@@ -964,6 +968,8 @@ d3.csv("./output/lines.csv", function(error, data) {
 		.style("font-size", function(d) { return d.data.size + "px"; })
 		.text(function(d) { return d.id.substring(d.id.lastIndexOf(".") + 1) + " (" + d.data.value + ")"; });
 });
+
+
 
 </script>
 
