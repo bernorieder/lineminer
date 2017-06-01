@@ -42,7 +42,7 @@ if($buffer[5] == "imageurl") {
 		$reply["type"] = "Netvizz image file";
 		$reply["col_date"] = $buffer[2];
 		$reply["col_text"] = $buffer[1];
-		$reply["col_score"] = $buffer[2]; 
+		$reply["col_score"] = $buffer[7]; 
 		$reply["col_text_post"] = false; }
 		
 if($buffer[14] == "in_reply_to_status_id") {
