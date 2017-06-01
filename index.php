@@ -289,6 +289,7 @@ foreach($queries as $query) {
 	$phrases[$query] = array();
 }
 
+$timescale = (isset($_GET["timescale"])) ? $_GET["timescale"]:"week";
 
 $col_date = urldecode($_GET["col_date"]);
 $cols_text = explode(",", urldecode($_GET["cols_text"]));
@@ -311,8 +312,6 @@ $dosummary = ($_GET["dosummary"] == "true") ? true:false;
 
 
 // ----- date calculations -----
-
-$timescale = (isset($_GET["timescale"])) ? $_GET["timescale"]:"week";
 
 $_GET["startdate"] = ($_GET["startdate"] != "") ? $_GET["startdate"]:"1971-01-01";
 if(preg_match("/ [0-9]{2}:[0-9]{2}:[0-9]{2}$/", $_GET["startdate"])) {
