@@ -31,6 +31,13 @@ if($buffer[6] == "comment_like_count") {
 		$reply["col_score"] = $buffer[2];
 		$reply["col_text_post"] = $buffer[1]; }
 		
+if($buffer[2] == "post_id") {
+		$reply["type"] = "Netvizz post stat file";
+		$reply["col_date"] = $buffer[11];
+		$reply["col_text"] = $buffer[4];
+		$reply["col_score"] = $buffer[16];
+		$reply["col_text_post"] = false; }
+		
 if($buffer[0] == "position") {
 		$reply["type"] = "Netvizz comments";
 		$reply["col_date"] = $buffer[4];
