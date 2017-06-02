@@ -289,7 +289,7 @@ foreach($queries as $query) {
 	$phrases[$query] = array();
 }
 
-$timescale = (isset($_GET["timescale"])) ? $_GET["timescale"]:"week";
+$timescale = ($_GET["timescale"] != "undefined") ? $_GET["timescale"]:"week";
 
 $col_date = urldecode($_GET["col_date"]);
 $cols_text = explode(",", urldecode($_GET["cols_text"]));
@@ -306,7 +306,7 @@ $stopwords = getstopwords($language);
 
 $showfull = ($_GET["showfull"] == "true") ? true:false;
 $getcontext = ($_GET["getcontext"] == "true") ? true:false;
-$dowordtree = ($_GET["dowordtree"] == "true") ? true:false;
+$dowordtree = ($_GET["dowordtree"] == "true" && $query != "") ? true:false;
 $dooutput = ($_GET["dooutput"] == "true") ? true:false;
 $dosummary = ($_GET["dosummary"] == "true") ? true:false;
 
@@ -322,7 +322,7 @@ if(preg_match("/ [0-9]{2}:[0-9]{2}:[0-9]{2}$/", $_GET["startdate"])) {
 	$startdate .= $_GET["startdate"] . " 00:00:00";
 }
 
-$_GET["enddate"] = ($_GET["enddate"]  != "") ? $_GET["enddate"]:date("Y-m-d");
+$_GET["enddate"] = ($_GET["enddate"] != "") ? $_GET["enddate"]:date("Y-m-d");
 if(preg_match("/ [0-9]{2}:[0-9]{2}:[0-9]{2}$/", $_GET["enddate"])) {
 	$enddate = $_GET["enddate"];
 } else if(preg_match("/ [0-9]{2}:[0-9]{2}$/", $_GET["enddate"])) {
@@ -364,8 +364,8 @@ $delimiter = ($extension == "tab" || $extension == "tsv") ? "\t":",";
 $fr = fopen($datadir . $datafile,"r");
 if($dooutput) { $fw = fopen($outdir . $filename_out,"w"); }
 $counter = 0;
-$oldestdate = strtotime($enddate);
-$newestdate = strtotime($startdate);
+$oldestdate = 1000000000000;
+$newestdate = 0;
 
 
 // --------------------------
@@ -374,7 +374,9 @@ $newestdate = strtotime($startdate);
 
 while(($rawbuffer = fgets($fr)) !== false) {
 
-	if($counter == 0) {			// first line is different
+	$counter++;
+
+	if($counter == 1) {			// first line is different
 		
 		if($dooutput) { fwrite($fw, $rawbuffer); }
 		
@@ -387,14 +389,15 @@ while(($rawbuffer = fgets($fr)) !== false) {
 			if(isset($cols_score[$buffer[$i]])) { $collocs_score[] = array($i,$cols_score[$buffer[$i]]); }
 		}
 		
-		$counter++;
-		
 		continue;
 	}
 	
+	
+	
 	// separate line to work on
 	$buffer = str_getcsv($rawbuffer,$delimiter,'"');
-		
+	
+	
 	// time filter
 	$unixdate = strtotime($buffer[$colloc_date]);
 	if($unixdate < strtotime($startdate) || $unixdate > strtotime($enddate)) { continue; }
@@ -453,7 +456,7 @@ while(($rawbuffer = fgets($fr)) !== false) {
 	
 	//print_r($buffer);
 	//echo $content;
-	//print_r($queries); print_r($queries_found); exit;
+	//print_r($queries); print_r($queries_found);
 
 	foreach($queries as $query) {
 
@@ -529,6 +532,7 @@ while(($rawbuffer = fgets($fr)) !== false) {
 
 fclose($fw);
 fclose($fr);
+
 
 // fill empty dates and create date list
 $start = $oldestdate;
@@ -897,8 +901,8 @@ if($dowordtree && count($queries) > 0) {
 
 <script>
 
-if(_params.dowordtree == false) {
-	throw "";
+if(_params.dowordtree == false || _params.query == "") {
+	throw "no d3 at this time";
 }
 
 var _nodesep = 200;
