@@ -4,6 +4,7 @@
 // Documentation https://github.com/bernorieder/lineminer/wiki
 
 
+
 // ----- link external files -----
 
 include "config.php";
