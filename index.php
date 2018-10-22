@@ -218,8 +218,10 @@ if ($dh = opendir($stopwordsdir)) {
 			<div class="rightTab">
 				<input type="radio" name="timescale" value="minute" /> minute
 				<input type="radio" name="timescale" value="hour" /> hour
-				<input type="radio" name="timescale" value="day"  /> day
-				<input type="radio" name="timescale" value="week"  /> week
+				<input type="radio" name="timescale" value="day" /> day
+				<input type="radio" name="timescale" value="week" checked="true" /> week
+				<input type="radio" name="timescale" value="month" /> month
+				<input type="radio" name="timescale" value="year" /> year
 			</div>
 		</div>
 		
@@ -233,7 +235,7 @@ if ($dh = opendir($stopwordsdir)) {
 		</div>
 		
 		<div class="rowTab">
-			<div class="fullTab"><input type="checkbox" name="getcontext" /> show word context</div>
+			<div class="fullTab"><input type="checkbox" name="getcontext" /> show word context (with <input type="text" name="contextcutoff" style="width:30px;" value="15" /> words in lists)</div>
 		</div>
 		
 		<div class="rowTab">
@@ -306,6 +308,7 @@ $stopwords = getstopwords($language);
 
 $showfull = ($_GET["showfull"] == "true") ? true:false;
 $getcontext = ($_GET["getcontext"] == "true") ? true:false;
+$contextcutoff = $_GET["contextcutoff"];
 $dowordtree = ($_GET["dowordtree"] == "true" && $query != "") ? true:false;
 $dooutput = ($_GET["dooutput"] == "true") ? true:false;
 $dosummary = ($_GET["dosummary"] == "true") ? true:false;
@@ -351,8 +354,15 @@ switch ($timescale) {
 		$dateformat = "o-W";
 		$seconds = 604800;
 		break;
+	case "month":
+		$dateformat = "Y-m";
+		$seconds = 2419200;
+		break;
+	case "year":
+		$dateformat = "Y";
+		$seconds = 31449600;
+		break;
 }
-
 
 $filename_out = "filtered_" . md5($query) . "_" . $datafile;
 $filename_summary = "summary_" . md5($query) . ".csv";
@@ -500,8 +510,8 @@ while(($rawbuffer = fgets($fr)) !== false) {
 	
 						if(!isset($wordlists[$query][$date][$word])) {
 							$wordlists[$query][$date][$word] = 0;
-							if(!isset($wordlist_full[$word])) { $wordlist_full[$word] = 0;}			// this is for tf*idf
-							$wordlist_full[$word]++;
+							if(!isset($wordlist_full[$word])) { $wordlist_full[$word] = array();}			// this is for tf*idf
+							$wordlist_full[$word][$date] = 1;
 						}
 						$wordlists[$query][$date][$word]++;
 					}
@@ -539,12 +549,11 @@ $start = $oldestdate;
 $stop = $newestdate;
 $datelist = array();
 
-//echo $start . " " . $stop;
 foreach($queries as $query) {
 
 	for($i = $start; $i < $stop; $i += $seconds) {
 		$date = date($dateformat,$i);
-		$datelist[] = $date;
+		if(!in_array($date, $datelist)) { $datelist[] = $date; }
 		if(!isset($datebins[$query][$date])) {
 			$datebins[$query][$date] = array();
 		}
@@ -557,52 +566,75 @@ foreach($queries as $query) {
 }
 
 
-if($dosummary) {
+// make overview calculations and write overview files
 
-	$counter = 0;	
-	$outlist = "query / " . $timescale;
+$counter = 0;	
+$outlist = "query / " . $timescale;
+$total = array();
+
+foreach($datebins as $query => $bin) {
 	
-	foreach($datebins as $query => $bin) {
+	if($counter == 0) {
 		
-		if($counter == 0) {
-			
-			// write the timescale row
-			foreach($datebins_full as $date => $val) {
-				$outlist .= "," . $date;
-			}
-			$outlist .= ",total\n";
-			
-			// write full lines per timescale
-			$total = 0;
-			$outlist .= "total";
-			foreach($datebins_full as $date => $val) {
-				$outlist .= "," . $val;
-				$total += $val;
-			}
-			$outlist .= ","  . $total . "\n";
-			$counter++;
-		}
-		
-		// write query numbers per timescale
-		$total = 0;
-		$outlist .= $query;		
+		// write the timescale row
 		foreach($datebins_full as $date => $val) {
-			$outlist .= "," . count($bin[$date]);
-			$total += count($bin[$date]);
+			$outlist .= "," . $date;
 		}
-		$outlist .= "," . $total . "\n";
+		$outlist .= ",total\n";
 		
-		// write query percent per timescale
-		$total = 0;
-		$total_full = 0;
-		$outlist .= $query . " (percent)";
+		// write full lines per timescale
+		$totals["full"] = 0;
+		$outlist .= "total";
 		foreach($datebins_full as $date => $val) {
-			$outlist .= "," . round((count($bin[$date]) / $val) * 100,2);
-			$total += count($bin[$date]);
-			$total_full += $val;
+			$outlist .= "," . $val;
+			$totals["full"] += $val;
 		}
-		$outlist .= "," . round(($total / $total_full) * 100,2) . "\n";
+		$outlist .= ","  . $totals["full"] . "\n";
+		$counter++;
 	}
+	
+	// write query numbers per timescale
+	$totals[$query] = 0;
+	$outlist .= $query;		
+	foreach($datebins_full as $date => $val) {
+		$outlist .= "," . count($bin[$date]);
+		$totals[$query] += count($bin[$date]);
+	}
+	$outlist .= "," . $totals[$query] . "\n";
+	
+	// write query percent per timescale
+	$total = 0;
+	$total_full = 0;
+	$outlist .= $query . " (percent)";
+	foreach($datebins_full as $date => $val) {
+		$outlist .= "," . round((count($bin[$date]) / $val) * 100,2);
+		$total += count($bin[$date]);
+		$total_full += $val;
+	}
+	$outlist .= "," . round(($total / $total_full) * 100,2) . "\n";
+}
+
+if($dosummary) {
+	/*
+	if($getcontext) {
+		echo "adding to output";
+		
+		print_r($wordlist_full);
+		
+		foreach($wordlists as $query => $wordlist) {
+
+			ksort($wordlist);
+			
+			//print_r($wordlists); exit;
+			
+			$outlist .= "\nQuery: [" . preg_replace("/\|/"," OR ",$query) . "]\n";
+			
+			
+		}
+	}
+	
+	print_r($outlist);
+	*/
 	
 	file_put_contents($outdir . $filename_summary, $outlist);
 }
@@ -614,6 +646,23 @@ if($dosummary) {
 		<div class="rowTab">
 			<div class="sectionTab"><h2>Results</h2></div>
 		</div>
+		
+		<div class="rowTab">
+			<div class="fullTab">
+			<?php
+			
+			echo "full number of lines: " . $totals["full"];
+			
+			foreach($queries as $query) {
+				if($query != "") {
+					echo " / " . $query . ": " . $totals[$query];
+				}
+			}
+				
+			?>
+			</div>
+		</div>
+
 		
 		<div id="if_panel_downloads" class="if_structure">
 			<div class="rowTab">
@@ -648,6 +697,7 @@ if($dosummary) {
 			
 		</div>
 		
+				
 		<div class="rowTab">
 			<div class="sectionTab"><h3>Number of lines the queries appear in</h3></div>
 		</div>
@@ -688,8 +738,6 @@ if($getcontext) {
 
 		echo '</tr><tr class="wordlist">';
 		
-		//print_r($wordlist);
-		
 		
 		foreach($datelist as $date) {
 			
@@ -701,7 +749,6 @@ if($getcontext) {
 				foreach($collocs_score as $colloc_score) {
 					$collocs_tmp[] = implode("|", $colloc_score);
 				}
-				
 				
 				echo '<td class="wordlist"><a href="getcomments.php?date='.$date.'&timescale='.$timescale.'&datafile='.$datafile.'&query='.$query.'&colloc_date='.$colloc_date.'&collocs_text='.implode(",",$collocs_text).'&collocs_score='.implode(",",$collocs_tmp).'" target="_blank">lines</a></td>';
 			} else {
@@ -724,18 +771,14 @@ if($getcontext) {
 			
 			arsort($list);
 
-			echo '<td class="wordlist"><em>frequency:</em><br />';
-			$speclist = array();
+			echo '<td class="wordlist"><em>frequency (tf/df):</em><br />';
 
 			$counter = 0;
 			foreach($list as $word => $freq) {
-				if($counter <= 15) {
-					echo $word . "&nbsp;(" . $freq . "/" . $wordlist_full[$word] . ")<br />";	
+				if($counter <= $contextcutoff) {
+					echo $word . "&nbsp;(" . $freq . "/" . count($wordlist_full[$word]) . ")<br />";	
 				}
 				$counter++;
-				if($wordlist_full[$word] > 2) {
-					$speclist[$word] = $freq / $wordlist_full[$word];
-				}
 			}
 
 			echo '</td>';
@@ -752,19 +795,19 @@ if($getcontext) {
 
 			$speclist = $wordlist[$date];
 			
-			// calculate specificity
+			// calculate specificity tf*idf = tf * log(doccount / docwithterm)
 			foreach($speclist as $word => $freq) {
-				$speclist[$word] = round($freq * log(count($datelist) / $wordlist_full[$word],2),2);  // tf*idf = tf * log(doccount / docwithterm)
+				$speclist[$word] = round($freq * log(count($datelist) / count($wordlist_full[$word]),2),2);
 			}
 
 			arsort($speclist);
 
-			echo '<td class="wordlist"><em>tf-idf:</em><br />';
+			echo '<td class="wordlist"><em>tf-idf (tf-idf/tf/df):</em><br />';
 			$counter = 0;
 			foreach($speclist as $word => $freq) {
-				if($counter == 15) { break; }
+				if($counter == $contextcutoff) { break; }
 				$counter++;
-				echo $word . "&nbsp;(" . $speclist[$word] . "," . $wordlist[$date][$word] . "," . $wordlist_full[$word] . ")<br />";
+				echo $word . "&nbsp;(" . $speclist[$word] . "," . $wordlist[$date][$word] . "," . count($wordlist_full[$word]) . ")<br />";
 			}
 
 			echo "</td>";
