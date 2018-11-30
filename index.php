@@ -368,6 +368,7 @@ switch ($timescale) {
 $filename_out = "filtered_" . md5($query) . "_" . $datafile;
 $filename_summary = "summary_" . md5($query) . ".csv";
 
+
 $extension = substr($datafile, strlen($datafile) - 3);
 $delimiter = ($extension == "tab" || $extension == "tsv") ? "\t":",";
 
@@ -483,7 +484,7 @@ while(($rawbuffer = fgets($fr)) !== false) {
 				
 				$tmpcontent = strtolower($content);
 				$tmpcontent = preg_replace("/\s+/iu"," ", $tmpcontent);
-				$tmpcontent = preg_replace("/[^a-z0-9\p{L}\p{N}\/' ]+/iu","_", $tmpcontent);			// \p{} is unicode syntax
+				$tmpcontent = preg_replace("/[^a-z0-9\p{L}\p{N}\/'#@ ]+/iu","_", $tmpcontent);			// \p{} is unicode syntax
 				
 				/*
 				// clean up content
@@ -728,17 +729,30 @@ if($getcontext) {
 	
 	foreach($wordlists as $query => $wordlist) {
 
+		$filename_rf = "rf_" . md5($query) . ".csv";
+
+		// prepare structure for creating rankflow CSV
+		$csv_rf = array();
+		for($i = 0; $i <= $contextcutoff; $i++) {
+			$csv_rf[] = array();
+			for($j = 0; $j < count($datelist); $j++) {
+				$csv_rf[count($csv_rf)-1][$j] = ""; 
+			}
+		}
 		ksort($wordlist);
 
 		echo '<td class="wordlist_title" colspan="'.count($datelist).'">Query: [<strong>' . preg_replace("/\|/"," OR ",$query) . '</strong>]</td></tr><tr class="wordlist">';
-
+		
+		$counter_rf = 0;
 		foreach($datelist as $date) {
+			
+			$csv_rf[0][$counter_rf] = $date . ",count";
+			$counter_rf++;
 			
 			echo '<th class="wordlist">'.$date.'</th>';
 		}
 
 		echo '</tr><tr class="wordlist">';
-		
 		
 		foreach($datelist as $date) {
 			
@@ -759,9 +773,10 @@ if($getcontext) {
 
 		echo '</tr><tr class="wordlist">';
 		
-		//foreach($wordlist as $date => $list) {
-
+		$counter_rf = -1;
 		foreach($datelist as $date) {
+			
+			$counter_rf++;
 			
 			if(count($wordlist[$date]) == 0) { 
 				echo '<td class="wordlist"></td>';
@@ -771,17 +786,18 @@ if($getcontext) {
 			$list = $wordlist[$date];
 			
 			arsort($list);
-
+			
 			echo '<td class="wordlist"><em>frequency (tf/df):</em><br />';
 
 			$counter = 0;
 			foreach($list as $word => $freq) {
 				if($counter <= $contextcutoff) {
-					echo $word . "&nbsp;(" . $freq . "/" . count($wordlist_full[$word]) . ")<br />";	
+					echo $word . "&nbsp;(" . $freq . "/" . count($wordlist_full[$word]) . ")<br />";
+					$csv_rf[$counter+1][$counter_rf] = $word.",".$freq;
 				}
 				$counter++;
 			}
-
+			
 			echo '</td>';
 		}
 		
@@ -815,9 +831,18 @@ if($getcontext) {
 		}
 
 		echo '</tr>';
+		
+		$fp = fopen($outdir . $filename_rf, 'w');
+
+		foreach ($csv_rf as $fields) {
+			fputs($fp, implode($fields, ',')."\n");
+		}
+		
+		echo '<tr class="wordlist"><td class="wordlist" colspan="'.count($datelist).'">RankFlow compatible CSV file: <a href="./output/'.$filename_rf.'" download>'.$filename_rf.'</a></td></tr><tr class="wordlist">';
 	}
 	
 	echo '</table>';
+
 }
 
 ?>
