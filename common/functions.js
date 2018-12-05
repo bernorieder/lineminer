@@ -132,6 +132,7 @@ function loadFile(_file) {
 	});
 }
 
+
 function clearParams() {
 	//window.history.replaceState(null, null, window.location.pathname);
 	_params = false;
