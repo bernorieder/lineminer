@@ -17,9 +17,16 @@ $buffer = str_getcsv(preg_replace("/\xEF\xBB\xBF/","",$buffer),$delimiter);
 // create response
 $reply = array("type" => "Unknown","columns" => $buffer);
 
+if(in_array("publishedAtSQL",$buffer) && in_array("videoTitle",$buffer) && in_array("videoDescription",$buffer) && in_array("viewCount",$buffer)) {
+	$reply["type"] = "YouTube Data Tools video list";
+	$reply["col_date"] = "publishedAtSQL";
+	$reply["col_text"] = "videoTitle";
+	$reply["col_score"] = "viewCount";
+	$reply["col_text_post"] = "videoDescription"; }
+
 if($buffer[6] == "authorChannelId") {
 		$reply["type"] = "YouTube Data Tools comment";
-		$reply["col_date"] =$buffer[3];
+		$reply["col_date"] = $buffer[3];
 		$reply["col_text"] = $buffer[5];
 		$reply["col_score"] = $buffer[2];
 		$reply["col_text_post"] = false; }
@@ -31,19 +38,19 @@ if($buffer[6] == "comment_like_count") {
 		$reply["col_score"] = $buffer[2];
 		$reply["col_text_post"] = $buffer[1]; }
 		
-if($buffer[2] == "post_id") {
+if(in_array("post_published_sql",$buffer) && in_array("post_message",$buffer) && in_array("engagement_fb",$buffer)) {
 		$reply["type"] = "Netvizz post stat file";
-		$reply["col_date"] = $buffer[11];
-		$reply["col_text"] = $buffer[4];
-		$reply["col_score"] = $buffer[16];
+		$reply["col_date"] = "post_published_sql";
+		$reply["col_text"] = "post_message";
+		$reply["col_score"] = "engagement_fb";
 		$reply["col_text_post"] = false; }
 		
-if($buffer[0] == "position") {
+if(in_array("post_published",$buffer) && in_array("comment_message",$buffer) && in_array("comment_like_count",$buffer)  && in_array("post_text",$buffer)) {
 		$reply["type"] = "Netvizz comments";
-		$reply["col_date"] = $buffer[4];
-		$reply["col_text"] = $buffer[8];
-		$reply["col_score"] = $buffer[2]; 
-		$reply["col_text_post"] = $buffer[3]; }
+		$reply["col_date"] = "post_published";
+		$reply["col_text"] = "comment_message";
+		$reply["col_score"] = "comment_like_count"; 
+		$reply["col_text_post"] = "post_text"; }
 		
 if($buffer[5] == "imageurl") {
 		$reply["type"] = "Netvizz image file";
@@ -52,11 +59,11 @@ if($buffer[5] == "imageurl") {
 		$reply["col_score"] = $buffer[7]; 
 		$reply["col_text_post"] = false; }
 		
-if($buffer[14] == "in_reply_to_status_id") {
+if(in_array("created_at",$buffer) && in_array("text",$buffer) && in_array("favorite_count",$buffer)) {
 		$reply["type"] = "DMI-TCAT tweet export";
-		$reply["col_date"] = $buffer[3];
-		$reply["col_text"] = $buffer[5];
-		$reply["col_score"] = $buffer[6];
+		$reply["col_date"] = "created_at";
+		$reply["col_text"] = "text";
+		$reply["col_score"] = "favorite_count";
 		$reply["col_text_post"] = false; }
 		
 if($buffer[5] == "post_ups") {
