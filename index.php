@@ -123,7 +123,7 @@ if ($dh = opendir($stopwordsdir)) {
 			<div class="leftTab">Files in data directory:</div>
 			
 			<div class="rightTab">
-				<select name="datafile" onchange="loadFile(this.value)">
+				<select name="datafile" onchange="clearParams();loadFile(this.value)">
 					<option value="none">select</option>
 					<?php
 					foreach($filenames as $filename) {
