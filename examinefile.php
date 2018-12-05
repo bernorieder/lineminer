@@ -22,7 +22,7 @@ if(in_array("publishedAtSQL",$buffer) && in_array("videoTitle",$buffer) && in_ar
 	$reply["col_date"] = "publishedAtSQL";
 	$reply["col_text"] = "videoTitle";
 	$reply["col_score"] = "viewCount";
-	$reply["col_text_post"] = "videoDescription"; }
+	$reply["col_text_post"] = "videoDescription"; }	
 
 if($buffer[6] == "authorChannelId") {
 		$reply["type"] = "YouTube Data Tools comment";
@@ -30,13 +30,6 @@ if($buffer[6] == "authorChannelId") {
 		$reply["col_text"] = $buffer[5];
 		$reply["col_score"] = $buffer[2];
 		$reply["col_text_post"] = false; }
-		
-if($buffer[6] == "comment_like_count") {
-		$reply["type"] = "Netvizz top comments";
-		$reply["col_date"] = $buffer[3];
-		$reply["col_text"] = $buffer[5];
-		$reply["col_score"] = $buffer[2];
-		$reply["col_text_post"] = $buffer[1]; }
 		
 if(in_array("post_published_sql",$buffer) && in_array("post_message",$buffer) && in_array("engagement_fb",$buffer)) {
 		$reply["type"] = "Netvizz post stat file";
