@@ -32,6 +32,7 @@ function onloadTodo() {
 		$("[name='startdate']").val(_params.startdate);
 		$("[name='enddate']").val(_params.enddate);
 		$("[name='contextcutoff']").val(_params.contextcutoff);
+		$("[name='contextwindow']").val(_params.contextwindow);
 		
 		loadFile(decodeURIComponent(_params.datafile));
 		$("select[name='datafile'] option[value='" + decodeURIComponent(_params.datafile) + "']").prop("selected",true);
@@ -77,6 +78,7 @@ function sendForm() {
 	_url += "&showfull=" + $("input[name='showfull']").is(':checked');
 	_url += "&getcontext=" + $("input[name='getcontext']").is(':checked');
 	_url += "&contextcutoff=" + $("input[name='contextcutoff']").val();
+	_url += "&contextwindow=" + $("input[name='contextwindow']").val();
 	_url += "&dowordtree=" + $("input[name='dowordtree']").is(':checked');
 	_url += "&dosummary=" + $("input[name='dosummary']").is(':checked');
 	_url += "&dooutput=" + $("input[name='dooutput']").is(':checked');
