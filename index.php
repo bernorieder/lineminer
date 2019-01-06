@@ -236,7 +236,7 @@ if ($dh = opendir($stopwordsdir)) {
 		</div>
 		
 		<div class="rowTab">
-			<div class="fullTab"><input type="checkbox" name="getcontext" /> show word context (with <input type="text" name="contextcutoff" style="width:30px;" value="15" /> words in lists)</div>
+			<div class="fullTab"><input type="checkbox" name="getcontext" /> show word context (with <input type="text" name="contextcutoff" style="width:25px;" value="15" /> words in lists and a window of <input type="text" name="contextwindow" style="width:25px;" value="0" /> words before and after; 0 = no limit)</div>
 		</div>
 		
 		<div class="rowTab">
@@ -310,6 +310,7 @@ $stopwords = getstopwords($language);
 $showfull = ($_GET["showfull"] == "true") ? true:false;
 $getcontext = ($_GET["getcontext"] == "true") ? true:false;
 $contextcutoff = $_GET["contextcutoff"];
+$contextwindow = $_GET["contextwindow"];
 $dowordtree = ($_GET["dowordtree"] == "true" && $query != "") ? true:false;
 $dooutput = ($_GET["dooutput"] == "true") ? true:false;
 $dosummary = ($_GET["dosummary"] == "true") ? true:false;
@@ -483,8 +484,11 @@ while(($rawbuffer = fgets($fr)) !== false) {
 			if($getcontext || $dowordtree) {
 				
 				$tmpcontent = strtolower($content);
+				//$tmpcontent = preg_replace("/\s+/iu"," ", $tmpcontent);
+				$tmpcontent = preg_replace("/[^a-z0-9\p{L}\p{N}#@:\/\.]+/iu"," ", $tmpcontent);			// \p{} is unicode syntax
+				//$tmpcontent = preg_replace("/\./iu","%2E", $tmpcontent);
+				//$tmpcontent = preg_replace( "/(?<![^a-zA-Z0-9])\.(?![^a-zA-Z0-9])/","%2E",$tmpcontent);
 				$tmpcontent = preg_replace("/\s+/iu"," ", $tmpcontent);
-				$tmpcontent = preg_replace("/[^a-z0-9\p{L}\p{N}\/'#@ ]+/iu","_", $tmpcontent);			// \p{} is unicode syntax
 				
 				/*
 				// clean up content
@@ -499,41 +503,87 @@ while(($rawbuffer = fgets($fr)) !== false) {
 					$content = strtolower($content);
 				}
 				*/
+				
+				if($contextwindow > 0) {
 
-				if($getcontext) {
-
-					$contextwords = preg_split('/\s+/', $tmpcontent);
+					$tmpcontext = preg_split("/".$query."/", $tmpcontent);
 					
-					for($i = 0; $i < count($contextwords); $i++) {
+					$tmpcontent = "";
+					for($i = 0; $i < count($tmpcontext); $i++) {
 						
+						$tmpwords = preg_split("/\s+/", trim($tmpcontext[$i]));
+						$toget = (count($tmpwords) < $contextwindow) ? count($tmpwords):$contextwindow;
+						
+						if($i < count($tmpcontext) - 1) {
+							$tmpcontent .= implode(" ",array_splice($tmpwords,count($tmpwords)-$toget,$toget)) . " ";
+							
+						}
+						
+						if($i > 0) {
+							$tmpcontent .= implode(" ",array_splice($tmpwords,0,$toget)) . " ";
+						}
+						
+					}
+					
+					//print($tmpcontent);
+					
+					$tmpafter = preg_split("/\s+/", $tmpcontext[1]);
+					
+					
+					//print_r($tmpcontent);
+					
+				}
+				
+				$contextwords = preg_split("/\s+/", trim($tmpcontent));
+
+				for($i = 0; $i < count($contextwords); $i++) {
+					
+					if(preg_match("/^https?:\//", $contextwords[$i])) {
+						$contextwords[$i] = preg_replace("/\./iu","%2E", $contextwords[$i]);
+					} else {
+						$contextwords[$i] = preg_replace("/\./iu","", $contextwords[$i]);
+						$contextwords[$i] = preg_replace("/:/iu","", $contextwords[$i]);
+					}
+					
+					if($getcontext) {
+					
 						$word = $contextwords[$i];
-						
+					
 						if(isset($stopwords[$word]) || strlen($word) < 3) { continue; }
+	
+						$word = preg_replace("/%2E/iu",".", $word);
 	
 						if(!isset($wordlists[$query][$date][$word])) {
 							$wordlists[$query][$date][$word] = 0;
 							if(!isset($wordlist_full[$word])) { $wordlist_full[$word] = array();}			// this is for tf*idf
 							$wordlist_full[$word][$date] = 1;
 						}
+						
 						$wordlists[$query][$date][$word]++;
 					}
 				}
+				
 			
 					
 				if($dowordtree) {
 				
-					$tmpcontent = trim(substr($tmpcontent, strpos($tmpcontent, $query) + strlen($query)));
+					$tmpcontent = trim(substr(implode(" ", $contextwords),strpos($tmpcontent, $query) + strlen($query)));
 					
 					//echo $tmpcontent . "\n";
 					
 					if(strlen($tmpcontent) > 0) {
-					
-						$contextwords = preg_split('/\s+/', $tmpcontent);
 						
+						$contextwords = preg_split("/\s+/", $tmpcontent);
+							
 						$toget = (count($contextwords) > 20) ? 20:count($contextwords);
 								
 						if($toget > 0) {
-							$phrases[$query][] = array_merge(array($query),array_splice($contextwords,0,$toget));
+							
+							$tmptext = array_merge(array($query),array_splice($contextwords,0,$toget));
+
+							$tmptext = preg_replace("/\//iu","%2F", $tmptext);
+							
+							$phrases[$query][] = $tmptext;						
 						}
 					}
 				}
@@ -553,7 +603,7 @@ $datelist = array();
 
 foreach($queries as $query) {
 
-	for($i = $start; $i < $stop; $i += $seconds) {
+	for($i = $start; $i < $stop + $seconds; $i += $seconds) {
 		$date = date($dateformat,$i);
 		if(!in_array($date, $datelist)) { $datelist[] = $date; }
 		if(!isset($datebins[$query][$date])) {
@@ -566,7 +616,6 @@ foreach($queries as $query) {
 
 	ksort($datebins[$query]);
 }
-
 
 // make overview calculations and write overview files
 
@@ -720,6 +769,10 @@ if($dosummary) {
 			</div>
 			
 			<div class="rowTab">
+				<div class="fullTab">tf: term frequency / df: document frequency / tf*idf: term frequency * inverse document frequency</div>
+			</div>
+			
+			<div class="rowTab">
 				<div id="if_panel_context_data">
 <?php
 
@@ -736,12 +789,15 @@ if($getcontext) {
 		for($i = 0; $i <= $contextcutoff; $i++) {
 			$csv_rf[] = array();
 			for($j = 0; $j < count($datelist); $j++) {
-				$csv_rf[count($csv_rf)-1][$j] = ""; 
+				$csv_rf[count($csv_rf)-1][$j] = ","; 
 			}
 		}
 		ksort($wordlist);
 
 		echo '<td class="wordlist_title" colspan="'.count($datelist).'">Query: [<strong>' . preg_replace("/\|/"," OR ",$query) . '</strong>]</td></tr><tr class="wordlist">';
+		
+		
+		
 		
 		$counter_rf = 0;
 		foreach($datelist as $date) {
@@ -787,16 +843,18 @@ if($getcontext) {
 			
 			arsort($list);
 			
-			echo '<td class="wordlist"><em>frequency (tf/df):</em><br />';
+			echo '<td class="wordlist"><strong>frequency (tf / df):</strong><br />';
 
 			$counter = 0;
 			foreach($list as $word => $freq) {
-				if($counter <= $contextcutoff) {
-					echo $word . "&nbsp;(" . $freq . "/" . count($wordlist_full[$word]) . ")<br />";
+				if($counter < $contextcutoff) {
+					echo $word . "&nbsp;(" . $freq . "&nbsp;/&nbsp;" . count($wordlist_full[$word]) . ")<br />";
 					$csv_rf[$counter+1][$counter_rf] = $word.",".$freq;
 				}
 				$counter++;
 			}
+			
+			
 			
 			echo '</td>';
 		}
@@ -819,12 +877,12 @@ if($getcontext) {
 
 			arsort($speclist);
 
-			echo '<td class="wordlist"><em>tf-idf (tf-idf/tf/df):</em><br />';
+			echo '<td class="wordlist"><strong>specificity (tf*idf / tf / df):</strong><br />';
 			$counter = 0;
 			foreach($speclist as $word => $freq) {
 				if($counter == $contextcutoff) { break; }
 				$counter++;
-				echo $word . "&nbsp;(" . $speclist[$word] . "," . $wordlist[$date][$word] . "," . count($wordlist_full[$word]) . ")<br />";
+				echo $word . "&nbsp;(" . $speclist[$word] . "&nbsp;/&nbsp;" . $wordlist[$date][$word] . "&nbsp;/&nbsp;" . count($wordlist_full[$word]) . ")<br />";
 			}
 
 			echo "</td>";
@@ -963,7 +1021,9 @@ if($dowordtree && count($queries) > 0) {
 		$csv .= $id . "," . $value . "\n";
 	}
 	
-	file_put_contents($outdir . "lines.csv",substr($csv,0,strlen($csv)-1));	
+	$treefn = "lines_" . md5($csv) . ".csv";
+	
+	file_put_contents($outdir . $treefn,substr($csv,0,strlen($csv)-1));	
 }
 
 ?>
@@ -972,6 +1032,13 @@ if($dowordtree && count($queries) > 0) {
 
 if(_params.dowordtree == false || _params.query == "") {
 	throw "no d3 at this time";
+}
+
+function revchars(_string) {
+	console.log(_string)
+	_string = _string.replace(/%2F/gi,"/")
+	_string = _string.replace(/%2E/gi,".")
+	return _string
 }
 
 var _nodesep = 200;
@@ -987,7 +1054,7 @@ var tree = d3.cluster()
 var stratify = d3.stratify()
 	.parentId(function(d) { return d.id.substring(0, d.id.lastIndexOf(".")); });
 
-d3.csv("./output/lines.csv", function(error, data) {
+d3.csv("./output/<?php echo $treefn; ?>", function(error, data) {
 	if (error) throw error;
   
 
@@ -1038,7 +1105,7 @@ d3.csv("./output/lines.csv", function(error, data) {
 		.attr("x", function(d) { return (d.depth > 0) ? 5 : -5; })
 		.style("text-anchor", function(d) { return (typeof(d.children) == "object" && d.depth > 0) ? "middle":"start"; })
 		.style("font-size", function(d) { return d.data.size + "px"; })
-		.text(function(d) { return d.id.substring(d.id.lastIndexOf(".") + 1) + " (" + d.data.value + ")"; });
+		.text(function(d) { return revchars(d.id.substring(d.id.lastIndexOf(".") + 1) + " (" + d.data.value + ")"); });
 });
 
 
