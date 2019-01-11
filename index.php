@@ -93,7 +93,7 @@ if ($dh = opendir($stopwordsdir)) {
 	<div id="if_description" class="if_structure">
 		<div class="rowTab">
 			<div class="fullTab">
-				<p>This tool provides (reasonably) fast text searching through large CSV/TSV files where each line is a timestamped unit of text. The main search feature counts the number of lines a queries - or queries - appear in.
+				<p>This tool provides (reasonably) fast text searching through large CSV/TSV files where each line is a timestamped unit of text. The main search feature counts the number of lines a query - or queries - appear in.
 				The tool adds a number of features for the exploration of query contexts.</p>
 				
 				<p>Source code is <a href="https://github.com/bernorieder/lineminer" target="_blank">available on github</a> and there is also a <a href="https://github.com/bernorieder/lineminer/wiki">documentation</a>.
@@ -236,7 +236,14 @@ if ($dh = opendir($stopwordsdir)) {
 		</div>
 		
 		<div class="rowTab">
-			<div class="fullTab"><input type="checkbox" name="getcontext" /> show word context (with <input type="text" name="contextcutoff" style="width:25px;" value="15" /> words in lists and a window of <input type="text" name="contextwindow" style="width:25px;" value="0" /> words before and after; 0 = no limit)</div>
+			<div class="fullTab"><input type="checkbox" name="showscore" /> show <select name="scorecalc">
+					<option value="sum">sum</option>
+					<option value="avg">average</option>
+				</select> of score column as extra line</div>
+		</div>
+		
+		<div class="rowTab">
+			<div class="fullTab"><input type="checkbox" name="getcontext" /> show word context (with <input type="text" name="contextcutoff" style="width:25px;" value="15" /> words in lists and a window of <input type="text" name="contextwindow" style="width:25px;" value="0" /> words before and after; 0 = no limit) EPERIMENTAL: limit context to column: <input type="text" name="limittocol" style="width:50px;" /></div>
 		</div>
 		
 		<div class="rowTab">
@@ -276,6 +283,7 @@ if(!isset($_GET["datafile"])) {
 
 $datebins = array();
 $datebins_full = array();
+$datebins_score = array();
 $wordlists = array();
 $wordlist_full = array();
 $phrases = array();
@@ -308,9 +316,12 @@ $language = (isset($_GET["language"])) ? urldecode($_GET["language"]):"english";
 $stopwords = getstopwords($language);
 
 $showfull = ($_GET["showfull"] == "true") ? true:false;
+$showscore = ($_GET["showscore"] == "true") ? true:false;
+$scorecalc = $_GET["scorecalc"];
 $getcontext = ($_GET["getcontext"] == "true") ? true:false;
 $contextcutoff = $_GET["contextcutoff"];
 $contextwindow = $_GET["contextwindow"];
+$limittocol = $_GET["limittocol"];
 $dowordtree = ($_GET["dowordtree"] == "true" && $query != "") ? true:false;
 $dooutput = ($_GET["dooutput"] == "true") ? true:false;
 $dosummary = ($_GET["dosummary"] == "true") ? true:false;
@@ -400,6 +411,10 @@ while(($rawbuffer = fgets($fr)) !== false) {
 			if($col_date == $buffer[$i]) { $colloc_date = $i; }
 			if(in_array($buffer[$i],$cols_text)) { $collocs_text[] = $i; }
 			if(isset($cols_score[$buffer[$i]])) { $collocs_score[] = array($i,$cols_score[$buffer[$i]]); }
+			if($limittocol != "") {
+				if($buffer[$i] == $limittocol) { $limittocol = $i; }
+			}
+			//echo("limit " . $limittocol);
 		}
 		
 		continue;
@@ -418,11 +433,10 @@ while(($rawbuffer = fgets($fr)) !== false) {
 	if($unixdate > $newestdate) { $newestdate = $unixdate; }
 	
 	$date = date($dateformat,$unixdate);
-	if(!isset($datebins_full[$date])) {
-		$datebins_full[$date] = 0;
-	}
-	$datebins_full[$date]++;
 	
+	// count full lines
+	if(!isset($datebins_full[$date])) { $datebins_full[$date] = 0; }
+	$datebins_full[$date]++;
 	
 	// score filter
 	foreach($collocs_score as $colloc_score) {
@@ -464,8 +478,12 @@ while(($rawbuffer = fgets($fr)) !== false) {
 	
 	if($found == false) { continue; }
 	
-	// the line has passed conitions, write it
+	// the line has passed conditions, write it
 	if($dooutput) { fwrite($fw, $rawbuffer); }
+	
+	// count score of the surviving lines
+	if(!isset($datebins_score[$date])) { $datebins_score[$date] = 0; }
+	$datebins_score[$date] += intval($buffer[$collocs_score[0][0]]);
 	
 	//print_r($buffer);
 	//echo $content;
@@ -482,6 +500,11 @@ while(($rawbuffer = fgets($fr)) !== false) {
 			$datebins[$query][$date][] = true;
 			
 			if($getcontext || $dowordtree) {
+				
+				if($limittocol != "") {
+					//echo "lmiting to text to: " . $limittocol;
+					$content = $buffer[$limittocol];
+				}
 				
 				$tmpcontent = strtolower($content);
 				//$tmpcontent = preg_replace("/\s+/iu"," ", $tmpcontent);
@@ -1030,7 +1053,7 @@ if($dowordtree && count($queries) > 0) {
 
 <script>
 
-if(_params.dowordtree == false || _params.query == "") {
+if(_params.dowordtree == "false" || _params.query == "") {
 	throw "no d3 at this time";
 }
 
@@ -1126,6 +1149,9 @@ d3.csv("./output/<?php echo $treefn; ?>", function(error, data) {
 	if($showfull) {
 		echo "data.addColumn('number','full comments');";
 	}
+	if($showscore) {
+		echo "data.addColumn('number','".$scorecalc." of score');";
+	}
 	foreach($queries as $query) {
 		echo "data.addColumn('number', '".$query."');";
 	}
@@ -1136,6 +1162,17 @@ d3.csv("./output/<?php echo $treefn; ?>", function(error, data) {
 		if($showfull) {
 			echo ",".$datebins_full[$key];
 		}
+		if($showscore) {
+			switch($scorecalc) {
+				case "sum":
+					$tmpval = $datebins_score[$key];
+					break;
+				case "avg":
+					$tmpval = ($datebins_full[$key] > 0) ? $datebins_score[$key] / $datebins_full[$key]:0;
+					break;
+			}
+			echo ",".$tmpval;
+		}
 		foreach($queries as $query) {
 			echo ",".count($datebins[$query][$key]);
 		}
@@ -1145,7 +1182,7 @@ d3.csv("./output/<?php echo $treefn; ?>", function(error, data) {
 	?>
 
 	var chart = new google.visualization.LineChart(document.getElementById('if_panel_linegraph_freq'));
-	chart.draw(data, {width:1220, height:360, fontSize:9, hAxis:{slantedTextAngle:90, slantedText:true},  lineWidth:1, chartArea:{left:50,top:10,width:1080,height:300}});
+	chart.draw(data, {width:1220, height:360, fontSize:9, hAxis:{slantedTextAngle:90, slantedText:true}, vAxis:{logScale:false}, lineWidth:1, chartArea:{left:50,top:10,width:1080,height:300}});
 
 
 	var data2 = new google.visualization.DataTable();
