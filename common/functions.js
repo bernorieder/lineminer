@@ -41,6 +41,8 @@ function onloadTodo() {
 		$("input:radio[name='timescale']").filter('[value="' + _params.timescale + '"]').attr("checked", true);
 		
 		if(_params.showfull == "true") { $("input:checkbox[name='showfull']").attr('checked', true); };
+		if(_params.showscore == "true") { $("input:checkbox[name='showscore']").attr('checked', true); };
+		$("select[name='scorecalc'] option[value='" + _params.scorecalc + "']").prop("selected",true);
 		if(_params.getcontext == "true") {
 			$("input:checkbox[name='getcontext']").attr('checked', true);
 			$("#if_panel_context").show();
@@ -76,7 +78,10 @@ function sendForm() {
 	_url += "&enddate=" + $("input[name='enddate']").val();
 	_url += "&timescale=" + $("input[name='timescale']:checked").val();
 	_url += "&showfull=" + $("input[name='showfull']").is(':checked');
+	_url += "&showscore=" + $("input[name='showscore']").is(':checked');
+	_url += "&scorecalc=" + $("select[name='scorecalc'] option:selected").val()
 	_url += "&getcontext=" + $("input[name='getcontext']").is(':checked');
+	_url += "&limittocol=" + $("input[name='limittocol']").val();
 	_url += "&contextcutoff=" + $("input[name='contextcutoff']").val();
 	_url += "&contextwindow=" + $("input[name='contextwindow']").val();
 	_url += "&dowordtree=" + $("input[name='dowordtree']").is(':checked');
