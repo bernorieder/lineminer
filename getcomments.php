@@ -4,6 +4,8 @@
 include "config.php";
 include "functions.php";
 
+//print_r($_GET);
+
 // ----- parse parameters -----
 $date = $_GET["date"];
 $timescale = $_GET["timescale"];
@@ -43,6 +45,15 @@ if($timescale == "week") {
 	$enddate = date('Y-m-d', strtotime($year."W".$week_number."7")) . " 23:59:59";
 }
 
+if($timescale == "month") {
+	$startdate = $date . "-01 00:00:00";
+	$enddate = date("Y-m-t", strtotime($startdate)) . " 23:59:59";
+}
+
+if($timescale == "year") {
+	$startdate = $date . "-01-01 00:00:00";
+	$enddate = $date . "-12-31 23:59:59";
+}
 
 ?>
 
@@ -97,9 +108,14 @@ while(($buffer = fgets($fr)) !== false) {
 		continue;
 	}
 	
+	
 	// time filter
 	$unixdate = strtotime($buffer[$colloc_date]);
-	if($unixdate < strtotime($startdate) || $unixdate > strtotime($enddate)) { continue; }
+	//print_r($unixdate . " ");
+	if($unixdate < strtotime($startdate) || $unixdate > strtotime($enddate)) { continue; }	
+	//print_r($buffer);
+	//exit;
+	
 	
 	// content filter
 	$content = "";
@@ -124,9 +140,6 @@ while(($buffer = fgets($fr)) !== false) {
 		
 		if(!preg_match("/".addslashes($query)."/i",$content) && $query != "all") { continue; }
 	}
-	
-	
-		
 		
 	echo '<td class="lines">';
 	echo implode('</td><td class="lines">', $buffer);
